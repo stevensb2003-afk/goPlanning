@@ -1,0 +1,23 @@
+{
+  "name": "GoPlanning Audiovisual",
+  "short_name": "GoPlanning",
+  "description": "Gestión de proyectos y tareas audiovisuales.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#A855F7",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
