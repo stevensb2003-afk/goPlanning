@@ -53,12 +53,20 @@ export const configService = {
   async updateConfig(config: Partial<AppConfig>) {
     try {
       const docRef = doc(db, "settings", "types");
+      // Use updateDoc for atomic field updates
       await updateDoc(docRef, config);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating config:", error);
-      // If document doesn't exist, create it
-      const docRef = doc(db, "settings", "types");
-      await setDoc(docRef, { ...DEFAULT_CONFIG, ...config });
+      
+      // If the document specifically doesn't exist (code: 'not-found'), then we initialize
+      if (error?.code === 'not-found') {
+        const docRef = doc(db, "settings", "types");
+        // Initialize with default plus the new changes
+        await setDoc(docRef, { ...DEFAULT_CONFIG, ...config });
+      } else {
+        // For other errors (permissions, network), we don't overwrite with defaults
+        throw error;
+      }
     }
   }
 };

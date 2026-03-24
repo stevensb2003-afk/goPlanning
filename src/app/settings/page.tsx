@@ -151,7 +151,7 @@ const ConfigTable = ({ items = [], onUpdate, placeholder }: {
 };
 
 export default function SettingsPage() {
-  const { profile, logout, isAdmin, requestNotificationPermission } = useAuth();
+  const { profile, logout, isAdmin, requestNotificationPermission, fcmToken, notificationPermission } = useAuth();
   const { toggleSidebar } = useUI();
   const [activeTab, setActiveTab] = useState('perfil');
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -582,16 +582,33 @@ export default function SettingsPage() {
 
                 {activeTab === 'notificaciones' && (
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                    {/* Header with Dynamic Status */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                       <div>
                         <h3 className="text-2xl font-bold text-white tracking-tight mb-1">Preferencias de Notificación</h3>
                         <p className="text-sm text-slate-400">Personaliza cómo y cuándo quieres recibir actualizaciones.</p>
                       </div>
-                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl px-4 py-2 flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${notificationSettings.pushEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
-                          {notificationSettings.pushEnabled ? 'Push Activo' : 'Push Desactivado'}
-                        </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className={`bg-slate-900 border ${
+                          notificationPermission === 'granted' && fcmToken ? 'border-emerald-500/20 text-emerald-400' :
+                          notificationPermission === 'denied' ? 'border-red-500/20 text-red-500' :
+                          'border-amber-500/20 text-amber-500'
+                        } rounded-2xl px-4 py-2 flex items-center gap-3 shadow-lg`}>
+                          <div className={`w-2 h-2 rounded-full ${
+                            notificationPermission === 'granted' && fcmToken ? 'bg-emerald-400 animate-pulse' :
+                            notificationPermission === 'denied' ? 'bg-red-500' :
+                            'bg-amber-500'
+                          }`} />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-inherit">
+                            {notificationPermission === 'granted' && fcmToken ? 'Activo en este equipo' :
+                             notificationPermission === 'denied' ? 'Bloqueado en este equipo' :
+                             !fcmToken && notificationPermission === 'granted' ? 'Sincronizando...' :
+                             'Pendiente de Activar'}
+                          </span>
+                        </div>
+                        {notificationPermission === 'denied' && (
+                          <span className="text-[9px] text-red-500/70 font-bold uppercase tracking-tighter">Habilita permisos en tu navegador</span>
+                        )}
                       </div>
                     </div>
 
@@ -610,6 +627,7 @@ export default function SettingsPage() {
                             description="Alertas en tiempo real en tu navegador."
                             checked={notificationSettings.pushEnabled}
                             onChange={(val) => handleNotificationSettingsSave({ pushEnabled: val })}
+                            disabled={notificationPermission === 'denied'}
                           />
                           <NotificationToggle 
                             label="Alta Prioridad" 
@@ -618,7 +636,6 @@ export default function SettingsPage() {
                             onChange={(val) => handleNotificationSettingsSave({ highPriority: val })}
                           />
                         </div>
-                        
                         <div className="mt-8 pt-8 border-t border-white/5">
                           <button
                             onClick={handleSendTestNotification}
@@ -648,7 +665,7 @@ export default function SettingsPage() {
                           <NotificationToggle 
                             label="Cambios de Estado" 
                             description="Actualizaciones sobre el progreso de tus tareas."
-                            checked={notificationSettings.approvals} // Using approvals as a proxy or just call it approvals
+                            checked={notificationSettings.approvals}
                             onChange={(val) => handleNotificationSettingsSave({ approvals: val })}
                           />
                         </div>

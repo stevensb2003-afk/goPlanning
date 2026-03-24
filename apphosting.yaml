@@ -1,0 +1,10 @@
+# Firebase App Hosting configuration file.
+# Learn more: https://firebase.google.com/docs/app-hosting/configure
+
+kind: "AppHostingConfig"
+schemaVersion: "v1"
+
+# Environment variables and secrets
+secrets:
+  - variable: "FIREBASE_SERVICE_ACCOUNT"
+    secret: "FIREBASE_SERVICE_ACCOUNT"
