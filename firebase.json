@@ -5,6 +5,15 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "ssrgoplanningaudiovisua",
+          "region": "us-east1"
+        }
+      }
     ]
   },
   "firestore": {

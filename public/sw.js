@@ -1,4 +1,4 @@
-const CACHE_NAME = 'goplanning-cache-v3';
+const CACHE_NAME = 'goplanning-cache-v4';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -42,9 +42,40 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         if (response) return response;
         return fetch(event.request).then((fetchResponse) => {
-          // Optional: dynamically cache new requests
           return fetchResponse;
         });
       })
+  );
+});
+
+// Push Notifications Handling
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      const options = {
+        body: data.body || 'Nuevo mensaje de GoPlanning',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-192x192.png',
+        data: {
+          url: data.url || '/'
+        },
+        vibrate: [100, 50, 100],
+        requireInteraction: true
+      };
+
+      event.waitUntil(
+        self.registration.showNotification(data.title || 'GoPlanning', options)
+      );
+    } catch (e) {
+      console.error('Error parsing push data:', e);
+    }
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
   );
 });
