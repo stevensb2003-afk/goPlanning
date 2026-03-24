@@ -9,8 +9,9 @@ export const metadata: Metadata = {
   description: "Plataforma de gestión de contenido para iglesias.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192x192.png",
-    apple: "/icons/icon-192x192.png",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+    shortcut: "/favicon.svg",
   },
   appleWebApp: {
     capable: true,
