@@ -10,6 +10,7 @@ export interface AppConfig {
   projectTypes: string[];
   taskTypes: string[];
   collaboratorSpecialties: string[];
+  inviteLink?: string;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -25,7 +26,8 @@ const DEFAULT_CONFIG: AppConfig = {
     "Sonido",
     "Iluminación",
     "Otro"
-  ]
+  ],
+  inviteLink: "https://go-planning.app/signup"
 };
 
 export const configService = {

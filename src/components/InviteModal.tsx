@@ -1,19 +1,33 @@
-"use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Mail, Link, Copy, Check, Share2, Sparkles } from 'lucide-react';
+import { configService } from '@/lib/services/configService';
 
 interface InviteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  specialties: string[];
+  specialties?: string[];
 }
 
 export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
   const [copied, setCopied] = useState(false);
+  const [baseInviteLink, setBaseInviteLink] = useState('https://go-planning.app/signup');
+  const [refId] = useState(() => Math.random().toString(36).substring(7));
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchLink = async () => {
+        const config = await configService.getConfig();
+        if (config.inviteLink) {
+          setBaseInviteLink(config.inviteLink);
+        }
+      };
+      fetchLink();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const inviteLink = `https://go-planning.app/signup?ref=invite_${Math.random().toString(36).substring(7)}`;
+  const inviteLink = `${baseInviteLink}${baseInviteLink.includes('?') ? '&' : '?'}ref=invite_${refId}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -96,7 +110,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mb-0.5">Enlace de acceso</p>
                   <p className="text-sm font-medium text-slate-300 truncate tracking-tight">
-                    go-planning.app/signup?ref=invite_...
+                    {baseInviteLink.replace(/^https?:\/\//, '').split('?')[0]}?ref=invite_...
                   </p>
                 </div>
 

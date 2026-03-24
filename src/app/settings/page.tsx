@@ -155,7 +155,7 @@ export default function SettingsPage() {
   const { toggleSidebar } = useUI();
   const [activeTab, setActiveTab] = useState('perfil');
   const [config, setConfig] = useState<AppConfig | null>(null);
-  const [configSubTab, setConfigSubTab] = useState<'specialties' | 'projects' | 'tasks'>('specialties');
+  const [configSubTab, setConfigSubTab] = useState<'general' | 'specialties' | 'projects' | 'tasks'>('general');
   const [profileData, setProfileData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -493,6 +493,7 @@ export default function SettingsPage() {
                       
                       <div className="flex flex-wrap bg-slate-900/50 p-1.5 rounded-2xl border border-white/10 self-start relative z-10">
                         {[
+                          { id: 'general' as const, label: 'General', icon: <Globe size={14} className="pointer-events-none" /> },
                           { id: 'specialties' as const, label: 'Especialidades', icon: <Users size={14} className="pointer-events-none" /> },
                           { id: 'projects' as const, label: 'Proyectos', icon: <Briefcase size={14} className="pointer-events-none" /> },
                           { id: 'tasks' as const, label: 'Tareas', icon: <CheckSquare size={14} className="pointer-events-none" /> }
@@ -503,7 +504,7 @@ export default function SettingsPage() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              setConfigSubTab(tab.id);
+                              setConfigSubTab(tab.id as any);
                             }}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer relative z-20 ${
                               configSubTab === tab.id 
@@ -519,22 +520,51 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="pb-20">
-                      <ConfigTable 
-                        items={
-                          configSubTab === 'specialties' ? config?.collaboratorSpecialties :
-                          configSubTab === 'projects' ? config?.projectTypes :
-                          config?.taskTypes
-                        }
-                        onUpdate={(items) => handleConfigUpdate({
-                          [configSubTab === 'specialties' ? 'collaboratorSpecialties' : 
-                          configSubTab === 'projects' ? 'projectTypes' : 'taskTypes']: items
-                        })}
-                        placeholder={`Nombre de ${
-                          configSubTab === 'specialties' ? 'especialidad' : 
-                          configSubTab === 'projects' ? 'tipo de proyecto' : 
-                          'tipo de tarea'
-                        }...`}
-                      />
+                      {configSubTab === 'general' ? (
+                        <div className="glass p-8 rounded-3xl border border-white/5 bg-white/[0.02] space-y-6">
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Enlace de Invitación</h4>
+                            <p className="text-sm text-slate-400 mb-6">Este es el enlace base que se utiliza para invitar a nuevos colaboradores al equipo.</p>
+                            
+                            <div className="flex flex-col sm:flex-row gap-4">
+                              <input 
+                                type="text" 
+                                value={config?.inviteLink || ''}
+                                onChange={(e) => setConfig(prev => prev ? { ...prev, inviteLink: e.target.value } : null)}
+                                placeholder="https://tu-dominio.com/signup"
+                                className="flex-1 bg-slate-900 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                              />
+                              <button 
+                                onClick={() => handleConfigUpdate({ inviteLink: config?.inviteLink })}
+                                className="px-8 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition-all shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2"
+                              >
+                                <Save size={18} />
+                                <span>Actualizar Link</span>
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-slate-500 italic mt-2">
+                              * Asegúrate de incluir el protocolo (http:// o https://). El sistema le añadirá automáticamente un ID de referencia.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <ConfigTable 
+                          items={
+                            configSubTab === 'specialties' ? config?.collaboratorSpecialties :
+                            configSubTab === 'projects' ? config?.projectTypes :
+                            config?.taskTypes
+                          }
+                          onUpdate={(items) => handleConfigUpdate({
+                            [configSubTab === 'specialties' ? 'collaboratorSpecialties' : 
+                            configSubTab === 'projects' ? 'projectTypes' : 'taskTypes']: items
+                          })}
+                          placeholder={`Nombre de ${
+                            configSubTab === 'specialties' ? 'especialidad' : 
+                            configSubTab === 'projects' ? 'tipo de proyecto' : 
+                            'tipo de tarea'
+                          }...`}
+                        />
+                      )}
                     </div>
                   </div>
                 )}

@@ -307,22 +307,6 @@ export default function CalendarGrid({ tasks, projects, team, viewType }: Calend
           </button>
 
           <div className="space-y-4">
-            {selectedTask.link && (
-              <a 
-                href={selectedTask.link.startsWith('http') ? selectedTask.link : `https://${selectedTask.link}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-all group mb-2"
-              >
-                <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform">
-                  <ExternalLink size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-0.5">Enlace Externo</p>
-                  <p className="text-[11px] font-bold text-slate-200 truncate">{selectedTask.link}</p>
-                </div>
-              </a>
-            )}
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Responsable</span>
               <div className="flex items-center gap-2">
