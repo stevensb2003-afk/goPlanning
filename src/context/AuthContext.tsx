@@ -58,8 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const title = payload.notification?.title || "Nueva notificación";
         const options = {
           body: payload.notification?.body || "",
-          icon: "/logo-full.png",
-          badge: "/favicon.png",
+          icon: "https://goplanning-audiovisual-church.web.app/favicon.svg",
+          badge: "https://goplanning-audiovisual-church.web.app/favicon.svg",
           data: payload.data
         };
         

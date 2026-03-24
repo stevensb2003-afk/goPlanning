@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
       data: data || {},
       webpush: {
         notification: {
-          icon: "/icons/icon-192x192.png",
-          badge: "/icons/icon-192x192.png",
+          icon: "https://goplanning-audiovisual-church.web.app/favicon.svg",
+          badge: "https://goplanning-audiovisual-church.web.app/favicon.svg",
         },
         fcmOptions: {
           link: data?.url || "/",

@@ -67,8 +67,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'GoPlanning';
   const notificationOptions = {
     body: payload.notification?.body || 'Nueva actualización en tus tareas.',
-    icon: '/icons/icon-192x192.png', // Premium Logo
-    badge: '/icons/icon-192x192.png',
+    icon: 'https://goplanning-audiovisual-church.web.app/favicon.svg', // Premium Logo
+    badge: 'https://goplanning-audiovisual-church.web.app/favicon.svg',
     data: {
       url: payload.data?.url || '/'
     },
@@ -90,8 +90,8 @@ self.addEventListener('push', (event) => {
       if (!data.from) { 
         const options = {
           body: data.body || 'Nuevo mensaje de GoPlanning',
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/icon-192x192.png',
+          icon: 'https://goplanning-audiovisual-church.web.app/favicon.svg',
+          badge: 'https://goplanning-audiovisual-church.web.app/favicon.svg',
           data: { url: data.url || '/' },
           vibrate: [100, 50, 100],
         };
