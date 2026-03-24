@@ -48,15 +48,22 @@ export async function POST(req: NextRequest) {
 
     const messages: admin.messaging.Message[] = tokens.map((token) => ({
       token,
+      // Standard notification block (for OS level handling)
       notification: {
         title,
         body,
       },
-      data: data || {},
+      // Data block (for our robust SW listener)
+      data: {
+        ...data,
+        title,
+        body,
+        url: data?.url || "/",
+      },
       webpush: {
         notification: {
-          icon: "https://goplanning-audiovisual-church.web.app/favicon.svg",
-          badge: "https://goplanning-audiovisual-church.web.app/favicon.svg",
+          icon: "/favicon.svg",
+          badge: "/favicon.svg",
         },
         fcmOptions: {
           link: data?.url || "/",
