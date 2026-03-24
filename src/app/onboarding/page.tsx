@@ -49,7 +49,7 @@ export default function OnboardingPage() {
         fullName: fullName || user.displayName,
         phoneNumber: `+506${phone.replace(/\D/g, '')}`,
         role: role,
-        baseRole: 'collaborator',
+        baseRole: profile?.baseRole || 'collaborator',
         specialty: role,
         onboarded: true,
         createdAt: new Date().toISOString(),

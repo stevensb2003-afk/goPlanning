@@ -131,7 +131,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       // User is authenticated
       if (profile) {
-        if (!profile.onboarded) {
+        // A user is considered onboarded if they have the explicit flag OR
+        // if they are a legacy user who already has a fullName or baseRole set.
+        const isActuallyOnboarded = profile.onboarded || !!profile.fullName || !!profile.baseRole;
+
+        if (!isActuallyOnboarded) {
           if (pathname !== "/onboarding") {
             router.replace("/onboarding");
           }
