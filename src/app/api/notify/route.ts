@@ -10,16 +10,27 @@ function getAdminApp(): admin.app.App {
 
   const saEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!saEnv) {
-    throw new Error("ENVIRONMENT_ERROR: FIREBASE_SERVICE_ACCOUNT is missing");
+    throw new Error("ENVIRONMENT_ERROR: FIREBASE_SERVICE_ACCOUNT is missing in process.env");
   }
 
+  // Pre-check for common formatting issues (like being truncated or having extra quotes)
+  const trimmedSa = saEnv.trim();
+  
   try {
-    const serviceAccount = JSON.parse(saEnv);
+    const serviceAccount = JSON.parse(trimmedSa);
+    if (!serviceAccount.project_id || !serviceAccount.private_key) {
+      throw new Error("Invalid service account JSON structure: missing project_id or private_key");
+    }
+    
     return admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (err: any) {
-    throw new Error(`JSON_ERROR: Could not parse FIREBASE_SERVICE_ACCOUNT - ${err.message}`);
+    // If it's a JSON parse error, provide some context (length, start/end)
+    const preview = trimmedSa.length > 20 
+      ? `${trimmedSa.substring(0, 10)}...${trimmedSa.substring(trimmedSa.length - 10)}`
+      : trimmedSa;
+    throw new Error(`CONFIGURATION_ERROR: [Length: ${trimmedSa.length}] [Preview: ${preview}] - ${err.message}`);
   }
 }
 
