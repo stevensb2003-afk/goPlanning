@@ -20,7 +20,6 @@ export default function NewTaskModal({ isOpen, onClose, onSuccess, projects }: N
   const { showToast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [link, setLink] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('none');
   const [taskType, setTaskType] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -55,7 +54,6 @@ export default function NewTaskModal({ isOpen, onClose, onSuccess, projects }: N
       await projectService.createTask({
         title,
         description,
-        link,
         ...(selectedProjectId !== 'none' ? { projectId: selectedProjectId } : {}),
         type: taskType,
         dueDate,
@@ -72,12 +70,10 @@ export default function NewTaskModal({ isOpen, onClose, onSuccess, projects }: N
        if (createAnother) {
         setTitle('');
         setDescription('');
-        setLink('');
         // Keep project and type as they might want to create similar tasks
       } else {
         setTitle('');
         setDescription('');
-        setLink('');
         setSelectedProjectId('none');
         setDueDate('');
         onClose();
@@ -190,19 +186,6 @@ export default function NewTaskModal({ isOpen, onClose, onSuccess, projects }: N
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Enlace Externo (Google Drive, Canva, etc.)</label>
-              <div className="relative">
-                <LinkIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  className="w-full bg-slate-900 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-purple-500/50 transition-all font-medium text-sm"
-                />
-              </div>
-            </div>
  
             <div className="flex items-center gap-2 pl-2">
               <input

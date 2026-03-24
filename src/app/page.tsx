@@ -224,12 +224,12 @@ export default function Dashboard() {
                 </div>
               </div>
                         {/* Relocated Execution Status Widget */}
-              <div className="bg-slate-900/60 md:glass rounded-3xl p-6 border border-white/5 flex flex-col h-[260px]">
-                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 text-center">Estado de Ejecución</h4>
+              <div className="bg-slate-900/60 md:glass rounded-3xl p-6 border border-white/5 flex flex-col min-h-[260px] h-auto">
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 text-center">Estado de Ejecución</h4>
                 
-                <div className="flex-1 flex items-center justify-around gap-12 px-6">
+                <div className="flex-1 flex flex-col sm:flex-row items-center justify-around gap-8 sm:gap-12 px-2 sm:px-6">
                   {/* Left: Chart Large */}
-                  <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
+                  <div className="relative w-32 h-32 sm:w-44 sm:h-44 shrink-0 flex items-center justify-center">
                     {/* Outer Glow Layer */}
                     <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-3xl" />
                     
@@ -246,24 +246,24 @@ export default function Dashboard() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0 translate-y-1">
-                      <span className="text-4xl font-black text-white tracking-tighter leading-none mb-1">
+                      <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter leading-none mb-1">
                         {stats?.globalProgress || 0}%
                       </span>
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         TOTAL
                       </span>
                     </div>
                   </div>
 
                   {/* Right: Stats Stacked */}
-                  <div className="space-y-6">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 opacity-80">Total de Tareas</span>
-                      <span className="text-4xl font-black text-white leading-none tracking-tighter">{stats?.totalTasks || 0}</span>
+                  <div className="flex flex-row sm:flex-col gap-8 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
+                    <div className="flex flex-col items-center sm:items-start">
+                      <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 opacity-80 whitespace-nowrap">Total Tareas</span>
+                      <span className="text-2xl sm:text-4xl font-black text-white leading-none tracking-tighter">{stats?.totalTasks || 0}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 opacity-80">Completado</span>
-                      <span className="text-4xl font-black text-emerald-400 leading-none tracking-tighter">{stats?.completedTasks || 0}</span>
+                    <div className="flex flex-col items-center sm:items-start">
+                      <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 opacity-80 whitespace-nowrap">Completado</span>
+                      <span className="text-2xl sm:text-4xl font-black text-emerald-400 leading-none tracking-tighter">{stats?.completedTasks || 0}</span>
                     </div>
                   </div>
                 </div>

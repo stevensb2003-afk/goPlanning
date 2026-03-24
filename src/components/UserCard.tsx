@@ -1,5 +1,6 @@
 "use client";
 import Badge from './Badge';
+import UserAvatar from './UserAvatar';
 import { Mail, MessageCircle, MoreVertical, Loader2, User, Camera, Video, PenTool, Edit3, Share2, Volume2, Sun, HelpCircle, Shield } from 'lucide-react';
 import { userService } from '@/lib/services/userService';
 import { useState } from 'react';
@@ -74,13 +75,13 @@ export default function UserCard({ uid, name, email, role, baseRole, specialty, 
     >
       <div className="flex justify-between items-start mb-6">
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800 border-2 border-white/10 flex items-center justify-center text-xl font-bold text-slate-400 group-hover:scale-105 group-hover:bg-slate-700 transition-all overflow-hidden shrink-0">
-            {avatar ? (
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-            )}
-          </div>
+          <UserAvatar 
+            src={avatar} 
+            name={name} 
+            size="xl" 
+            rounded="rounded-2xl" 
+            className="group-hover:scale-105 transition-all shadow-xl shadow-black/20"
+          />
           <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-slate-950 ${statusColors[status]}`}></div>
         </div>
         <button 

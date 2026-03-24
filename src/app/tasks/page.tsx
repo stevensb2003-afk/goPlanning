@@ -13,6 +13,7 @@ import NewTaskModal from '@/components/NewTaskModal';
 import { useUI } from '@/context/UIContext';
 import { useData } from '@/context/DataContext';
 import { Menu as MenuIcon } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 function TasksContent() {
   const { profile, isAdmin } = useAuth();
@@ -267,7 +268,7 @@ function TasksContent() {
                     ...team.map(u => ({
                       value: u.uid,
                       label: u.fullName || 'Usuario',
-                      icon: u.photoURL ? <img src={u.photoURL} className="w-4 h-4 rounded-full object-cover shadow-sm" alt="" /> : <User size={14} />
+                      icon: <UserAvatar src={u.photoURL} name={u.fullName || 'Usuario'} size="xs" className="w-4 h-4 shadow-sm" />
                     }))
                   ]}
                 />

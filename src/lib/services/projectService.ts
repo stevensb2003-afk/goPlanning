@@ -40,7 +40,7 @@ export type TaskStatus = 'todo' | 'in-progress' | 'pending-approval' | 'publishe
 export const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   'todo': ['in-progress', 'frozen', 'canceled'],
   'in-progress': ['todo', 'pending-approval', 'frozen', 'canceled'],
-  'pending-approval': ['in-progress', 'published'], 
+  'pending-approval': ['in-progress', 'canceled'], 
   'published': ['done', 'canceled'],
   'frozen': ['todo', 'in-progress', 'canceled'],
   'done': ['in-progress'],
@@ -69,7 +69,6 @@ export interface Task {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   creatorName?: string;
   creatorPhoto?: string;
-  link?: string;
 }
 
 export const projectService = {

@@ -4,6 +4,7 @@ import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Settings, Users, Log
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import UserAvatar from './UserAvatar';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
@@ -86,13 +87,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="mt-auto space-y-4">
           <div className="px-4 py-4 rounded-2xl bg-slate-900/50 border border-white/5 shadow-inner">
             <div className="flex items-center gap-3">
-              {profile?.photoURL ? (
-                <img src={profile.photoURL} alt={profile.fullName} className="w-10 h-10 rounded-full border-2 border-white/5 shadow-lg" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-black text-white shadow-lg uppercase">
-                  {getInitials(profile?.fullName || profile?.displayName || 'User')}
-                </div>
-              )}
+              <UserAvatar 
+                src={profile?.photoURL} 
+                name={profile?.fullName || profile?.displayName} 
+                size="md" 
+                rounded="rounded-full" 
+                className="border-2 border-white/5 shadow-lg"
+              />
               <div className="min-w-0">
                 <p className="text-xs font-black text-white truncate tracking-tight">{profile?.fullName || profile?.displayName || 'Usuario'}</p>
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest truncate opacity-60">

@@ -7,6 +7,7 @@ import { configService, AppConfig } from '@/lib/services/configService';
 import { userService, UserProfile, NotificationSettings } from '@/lib/services/userService';
 import { notificationService } from '@/lib/services/notificationService';
 import InlineDropdown from '@/components/InlineDropdown';
+import UserAvatar from '@/components/UserAvatar';
 
 const NotificationToggle = ({ label, description, checked, onChange, disabled }: { 
   label: string, 
@@ -333,13 +334,13 @@ export default function SettingsPage() {
                 {activeTab === 'perfil' && (
                   <div className="space-y-6 relative">
                     <div className="flex items-center gap-6 pb-6 border-b border-white/5">
-                      <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-purple-500/30 flex items-center justify-center text-2xl font-bold text-white shrink-0 shadow-2xl overflow-hidden">
-                        {profile?.photoURL ? (
-                          <img src={profile.photoURL} alt={profile?.fullName || 'Perfil'} className="w-full h-full object-cover" />
-                        ) : (
-                          (profile?.fullName || profile?.displayName || 'U').split(' ').map(n => n[0]).join('').substring(0, 2)
-                        )}
-                      </div>
+                      <UserAvatar 
+                        src={profile?.photoURL} 
+                        name={profile?.fullName || profile?.displayName} 
+                        size="xl" 
+                        rounded="rounded-full" 
+                        className="w-20 h-20 border-2 border-purple-500/30 shadow-2xl"
+                      />
                       <div>
                         <h3 className="text-xl font-bold text-white">{profile?.fullName}</h3>
                         <p className="text-sm text-slate-400">{profile?.email}</p>
@@ -411,13 +412,13 @@ export default function SettingsPage() {
                         {users.map((u) => (
                           <div key={u.uid} className="glass p-6 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-white/10 group">
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-white overflow-hidden uppercase">
-                                {u.photoURL ? (
-                                  <img src={u.photoURL} alt={u.fullName || 'Perfil'} className="w-full h-full object-cover" />
-                                ) : (
-                                  (u.fullName || u.displayName || '?').split(' ').map(n => n[0]).join('').substring(0, 2)
-                                )}
-                              </div>
+                              <UserAvatar 
+                                src={u.photoURL} 
+                                name={u.fullName || u.displayName} 
+                                size="lg" 
+                                rounded="rounded-full" 
+                                className="border border-white/10 shadow-lg"
+                              />
                               <div>
                                 <h4 className="font-bold text-white">{u.fullName || u.displayName || 'Usuario sin nombre'}</h4>
                                 <p className="text-xs text-slate-500">{u.email}</p>

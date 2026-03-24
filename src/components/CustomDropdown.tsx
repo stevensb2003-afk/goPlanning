@@ -18,6 +18,7 @@ interface CustomDropdownProps {
   label?: string;
   className?: string;
   disabled?: boolean;
+  minWidth?: string;
 }
 
 export default function CustomDropdown({ 
@@ -27,7 +28,8 @@ export default function CustomDropdown({
   placeholder = "Seleccionar...", 
   label,
   className = "",
-  disabled = false
+  disabled = false,
+  minWidth
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,7 +81,10 @@ export default function CustomDropdown({
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 w-full mt-1.5 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div 
+            className="absolute top-full left-0 mt-1.5 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            style={{ minWidth: minWidth || '160px' }}
+          >
             <div className="max-h-[240px] overflow-y-auto p-1.5 scrollbar-subtle">
               {options.map((option) => (
                 <button
@@ -89,11 +94,11 @@ export default function CustomDropdown({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between gap-2 p-2.5 rounded-xl transition-all group ${value === option.value ? 'bg-purple-600/10 text-white' : 'hover:bg-white/5 text-slate-400 hover:text-white'}`}
+                  className={`w-full flex items-center justify-between gap-2 p-2 rounded-xl transition-all group ${value === option.value ? 'bg-purple-600/10 text-white' : 'hover:bg-white/5 text-slate-400 hover:text-white'}`}
                 >
                   <div className="flex items-center gap-3">
                     <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-slate-800 border border-white/5 group-hover:scale-105"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center transition-all bg-slate-800 border border-white/5 group-hover:scale-105"
                       style={{ 
                         backgroundColor: value === option.value ? `${option.color || '#A855F7'}20` : `${option.color || '#334155'}10`,
                         color: option.color || '#A855F7'

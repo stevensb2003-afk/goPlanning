@@ -23,26 +23,36 @@ export const usePushNotifications = (userId: string | undefined) => {
       setPermission(status);
       
       if (status === 'granted') {
-        const currentToken = await getToken(messaging, {
-          vapidKey: VAPID_KEY
-        });
-        
-        if (currentToken) {
-          setToken(currentToken);
-          // Guardar el token en Firestore
-          const userRef = doc(db, 'users', userId);
-          await updateDoc(userRef, {
-            fcmTokens: arrayUnion(currentToken)
-          });
-          console.log('FCM Token generated and saved');
-        } else {
-          console.log('No registration token available. Request permission to generate one.');
-        }
+        await syncToken(); // Use the existing sync logic
       }
     } catch (error) {
-      console.error('An error occurred while retrieving token:', error);
+      console.error('An error occurred while requesting permission:', error);
     }
   };
 
-  return { token, permission, requestPermission };
+  const syncToken = async () => {
+    if (!userId || !messaging || Notification.permission !== 'granted') return;
+
+    try {
+      const currentToken = await getToken(messaging, {
+        vapidKey: VAPID_KEY
+      });
+      
+      if (currentToken) {
+        setToken(currentToken);
+        // Save to Firestore
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          fcmTokens: arrayUnion(currentToken)
+        });
+        console.log('FCM Token synced successfully');
+      }
+    } catch (error) {
+      console.error('Error syncing FCM token:', error);
+    }
+  };
+
+  return { token, permission, requestPermission, syncToken };
 };
+
+

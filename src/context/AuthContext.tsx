@@ -37,7 +37,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { requestPermission, token, permission } = usePushNotifications(user?.uid);
+  const { requestPermission, syncToken, token, permission } = usePushNotifications(user?.uid);
+
+  // Sync token automatically if permission is already granted
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      syncToken();
+    }
+  }, [user]);
 
   // Setup foreground message listener
   useEffect(() => {

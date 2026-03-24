@@ -6,23 +6,14 @@ export default function PWARegistration() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/firebase-messaging-sw.js')
-          .then((registration) => {
-            console.log('FCM Service Worker registered with scope:', registration.scope);
-          })
-          .catch((error) => {
-            console.error('FCM Service Worker registration failed:', error);
-          });
-          
-        // También registrar el SW principal si existe
+        // Register the unified Service Worker
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            console.log('Main Service Worker registered with scope:', registration.scope);
+            console.log('Unified GoPlanning Service Worker registered:', registration.scope);
           })
           .catch((error) => {
-            console.log('Main Service Worker registration failed or not found:', error);
+            console.error('Service Worker registration failed:', error);
           });
       });
     }
@@ -30,3 +21,4 @@ export default function PWARegistration() {
 
   return null;
 }
+

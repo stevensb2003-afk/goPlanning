@@ -10,6 +10,7 @@ import CustomDatePicker from './CustomDatePicker';
 import { serverTimestamp } from 'firebase/firestore';
 import CommentText from './CommentText';
 import { cn } from '@/lib/utils';
+import UserAvatar from './UserAvatar';
 
 
 interface TaskDetailDrawerProps {
@@ -65,6 +66,8 @@ export default function TaskDetailDrawer({
   const [projectMembers, setProjectMembers] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  const [showReactivateConfirm, setShowReactivateConfirm] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<TaskStatus | null>(null);
 
   useEffect(() => {
     const fetchProjectMembers = async () => {
@@ -162,19 +165,45 @@ export default function TaskDetailDrawer({
 
   const handleUpdate = async (fields: any) => {
     if (!task?.id) return;
+
+    // Interceptar cambios desde 'canceled' para confirmar reactivación
+    if (task.status === 'canceled' && fields.status && fields.status !== 'canceled') {
+      setPendingStatus(fields.status);
+      setShowReactivateConfirm(true);
+      return;
+    }
+
     if (onLocalUpdate) onLocalUpdate(task.id, fields);
     try {
       await projectService.updateTask(task.id, fields, task.projectId, user?.uid);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error updating task:", error);
-      // Revert local update could be handled here if needed
+    }
+  };
+
+  const confirmReactivate = async () => {
+    if (!pendingStatus || !task?.id) return;
+    
+    const fields = { status: pendingStatus };
+    if (onLocalUpdate) onLocalUpdate(task.id, fields);
+    
+    try {
+      await projectService.updateTask(task.id, fields, task.projectId, user?.uid);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Error reactivating task:", error);
+    } finally {
+      setShowReactivateConfirm(false);
+      setPendingStatus(null);
     }
   };
 
   if (!isOpen || !task) return null;
 
-  const isReadOnly = task.status === 'canceled';
+  const isOwner = task.assignedTo?.includes(user?.uid);
+  const canReactivate = isAdmin || isOwner;
+  const isReadOnly = task.status === 'canceled' && !canReactivate;
   const creatorData = team.find(u => u.uid === task.createdBy);
 
   const formattedCreatedAt = task.createdAt?.toDate 
@@ -303,7 +332,7 @@ export default function TaskDetailDrawer({
                     ...team.filter(u => !task.projectId || projectMembers.includes(u.uid)).map((u: any) => ({
                       value: u.uid,
                       label: u.fullName || 'Usuario',
-                      icon: u.photoURL ? <img src={u.photoURL} className="w-4 h-4 rounded-full object-cover" alt="" /> : <UserIcon size={12} />
+                      icon: <UserAvatar src={u.photoURL} name={u.fullName || u.displayName} size="xs" className="w-4 h-4" />
                     }))
                   ]}
                   trigger={
@@ -313,9 +342,12 @@ export default function TaskDetailDrawer({
                     )}>
                       {task.ownerData ? (
                         <>
-                          <div className="w-5 h-5 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[8px] font-bold text-white overflow-hidden">
-                            {task.ownerData.photoURL ? <img src={task.ownerData.photoURL} className="w-full h-full object-cover" /> : (task.ownerData.fullName || "U")[0]}
-                          </div>
+                          <UserAvatar 
+                            src={task.ownerData.photoURL} 
+                            name={task.ownerData.fullName} 
+                            size="xs" 
+                            className="w-5 h-5"
+                          />
                           <span className="text-xs font-bold text-slate-200">{task.ownerData.fullName}</span>
                         </>
                       ) : (
@@ -355,13 +387,12 @@ export default function TaskDetailDrawer({
               {/* Creador */}
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Creador</span>
               <div className="flex items-center gap-2 px-2">
-                <div className="w-5 h-5 rounded-full bg-slate-800 border border-purple-500/20 flex items-center justify-center text-[8px] font-bold text-white overflow-hidden">
-                  {creatorData?.photoURL ? (
-                    <img src={creatorData.photoURL} className="w-full h-full object-cover" />
-                  ) : (
-                    (creatorData?.fullName || task.creatorName || "Sistema")[0]
-                  )}
-                </div>
+                  <UserAvatar 
+                    src={creatorData?.photoURL} 
+                    name={creatorData?.fullName || task.creatorName} 
+                    size="xs" 
+                    className="w-5 h-5"
+                  />
                 <span className="text-xs font-bold text-slate-300">
                   {creatorData?.fullName || task.creatorName || "Sistema"}
                 </span>
@@ -418,12 +449,12 @@ export default function TaskDetailDrawer({
                   <ShieldCheck size={12} /> Aprobado por
                 </p>
                 <div className="flex items-center gap-2 p-1">
-                  <div className="w-5 h-5 rounded-full bg-slate-800 border border-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden text-center">
-                    {team.find(u => u.uid === task.approvedBy)?.photoURL ? 
-                      <img src={team.find(u => u.uid === task.approvedBy)?.photoURL} className="w-full h-full object-cover" /> : 
-                      (team.find(u => u.uid === task.approvedBy)?.fullName || "A")[0]
-                    }
-                  </div>
+                    <UserAvatar 
+                      src={team.find(u => u.uid === task.approvedBy)?.photoURL} 
+                      name={team.find(u => u.uid === task.approvedBy)?.fullName} 
+                      size="xs" 
+                      className="w-5 h-5"
+                    />
                   <p className="text-xs font-semibold text-emerald-400 truncate max-w-[100px]">
                     {team.find(u => u.uid === task.approvedBy)?.fullName || 'Admin'}
                   </p>
@@ -451,7 +482,7 @@ export default function TaskDetailDrawer({
                 <AlignLeft size={14} className="text-slate-400" />
                 <span>Descripción</span>
               </div>
-              {!isCollaborator && !isReadOnly && (
+              {!isReadOnly && (
                 <button
                   type="button"
                   onClick={() => setIsEditingDescription(!isEditingDescription)}
@@ -539,7 +570,7 @@ export default function TaskDetailDrawer({
                       name={c.userName}
                       time={c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : "Reciente"}
                       text={c.text}
-                      avatar={c.userPhoto ? <img src={c.userPhoto} className="w-full h-full object-cover" alt="" /> : (c.userName || "U")[0]}
+                      avatar={<UserAvatar src={c.userPhoto} name={c.userName} size="sm" className="w-full h-full" />}
                       isMe={c.userId === user?.uid}
                       team={team || []}
                     />
@@ -567,9 +598,12 @@ export default function TaskDetailDrawer({
                     onClick={() => insertMention(u)}
                     className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-purple-500/10 text-left transition-all group/item"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden border border-white/5">
-                      {u.photoURL ? <img src={u.photoURL} className="w-full h-full object-cover" alt="" /> : u.fullName?.[0]}
-                    </div>
+                      <UserAvatar 
+                        src={u.photoURL} 
+                        name={u.fullName} 
+                        size="sm" 
+                        className="w-7 h-7"
+                      />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-slate-200 font-bold truncate group-hover/item:text-purple-400 trasition-colors">{u.fullName}</p>
                       <p className="text-[9px] text-slate-500 uppercase font-medium">{u.role || 'Miembro'}</p>
@@ -611,7 +645,47 @@ export default function TaskDetailDrawer({
             </button>
           </form>
         </div>
+        
+        <div className="p-4 bg-white/5 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle size={10} className="text-slate-600" />
+            <span>ID: {task.id}</span>
+          </div>
+          <span>Actualizado hace poco</span>
+        </div>
       </div>
+
+      {/* Confirmation Modal for Reactivation */}
+      {showReactivateConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowReactivateConfirm(false)}></div>
+          <div className="relative glass-card bg-slate-900 w-full max-w-sm rounded-[2rem] overflow-hidden animate-in fade-in zoom-in duration-300 border border-white/10 shadow-2xl">
+            <div className="p-6 text-center space-y-4">
+              <div className="mx-auto w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-500/20">
+                <AlertCircle size={32} className="text-amber-500" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-white">Reactivar Tarea</h3>
+                <p className="text-slate-400 text-sm">¿Estás seguro de que deseas volver a activar esta tarea? Volverá al flujo de trabajo activo.</p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowReactivateConfirm(false)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 text-white text-xs font-bold hover:bg-white/10 transition-all border border-white/5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmReactivate}
+                  className="flex-1 px-4 py-3 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20"
+                >
+                  Sí, Reactivar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

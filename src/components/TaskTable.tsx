@@ -21,7 +21,8 @@ import {
   ArrowUp,
   Minus,
   AlertCircle,
-  Link as LinkIcon
+  Link as LinkIcon,
+  RotateCcw
 } from 'lucide-react';
 import { Task, Project, projectService, TaskStatus, ALLOWED_TRANSITIONS } from '@/lib/services/projectService';
 import { UserProfile } from '@/lib/services/userService';
@@ -30,6 +31,7 @@ import { serverTimestamp } from 'firebase/firestore';
 import CustomDatePicker from './CustomDatePicker';
 import InlineDropdown from './InlineDropdown';
 import { cn } from '@/lib/utils';
+import UserAvatar from './UserAvatar';
 
 interface TaskTableProps {
   tasks: Task[];
@@ -72,6 +74,52 @@ export function getPriorityConfig(priority?: string) {
 
 export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, onLocalUpdate, onTaskClick, isAdmin, isPendingView, isCompletedView, currentUserProfile }: TaskTableProps) {
   const isCollaborator = currentUserProfile?.baseRole === 'collaborator';
+  
+  // -- Reactivation Confirmation State --
+  const [showReactivateConfirm, setShowReactivateConfirm] = useState(false);
+  const [pendingTaskToReactivate, setPendingTaskToReactivate] = useState<{id: string, status: TaskStatus} | null>(null);
+
+  const canReactivate = (task: Task) => {
+    if (!currentUserProfile) return false;
+    const isAdmin = currentUserProfile.baseRole === 'admin' || currentUserProfile.email === 'info@v-creations.com';
+    const proj = projects.find(p => p.id === task.projectId);
+    const isOwner = proj?.createdBy === currentUserProfile.uid;
+    return isAdmin || isOwner;
+  };
+
+  const handleStatusChange = async (task: Task, newStatus: TaskStatus) => {
+    // If trying to change FROM canceled, check permissions and show confirmation
+    if (task.status === 'canceled') {
+      if (!canReactivate(task)) {
+        return; // UI should have disabled the dropdown anyway
+      }
+      setPendingTaskToReactivate({ id: task.id!, status: newStatus });
+      setShowReactivateConfirm(true);
+      return;
+    }
+
+    // Normal update
+    try {
+      onLocalUpdate(task.id!, { status: newStatus });
+      await projectService.updateTask(task.id!, { status: newStatus }, task.projectId, currentUserProfile?.uid);
+      onUpdate();
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
+  };
+
+  const confirmReactivate = async () => {
+    if (!pendingTaskToReactivate) return;
+    try {
+      onLocalUpdate(pendingTaskToReactivate.id, { status: pendingTaskToReactivate.status });
+      await projectService.updateTask(pendingTaskToReactivate.id, { status: pendingTaskToReactivate.status }, undefined, currentUserProfile?.uid);
+      onUpdate();
+      setShowReactivateConfirm(false);
+      setPendingTaskToReactivate(null);
+    } catch (err) {
+      console.error("Error reactivating task:", err);
+    }
+  };
 
   if (!tasks || tasks.length === 0) {
     return (
@@ -106,7 +154,6 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
               <th className="px-6 py-4">Encargado</th>
               {!isCompletedView && <th className="px-6 py-4">Estado</th>}
               <th className="px-6 py-4">Entrega</th>
-              <th className="px-6 py-4 text-center">Link</th>
               {isCompletedView && <th className="px-6 py-4">Finalizado</th>}
               {isCompletedView && <th className="px-6 py-4">Estado Tiempo</th>}
               {isPendingView && isAdmin && <th className="px-6 py-4">Acciones</th>}
@@ -207,9 +254,14 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                               {task.assignedTo.map(uid => {
                                 const u = team.find(ut => ut.uid === uid);
                                 return (
-                                  <div key={uid} className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden z-10 hover:z-20 transition-all shadow-lg" title={u?.fullName || 'Usuario'}>
-                                    {u?.photoURL ? <img src={u.photoURL} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] font-bold text-white">{u?.fullName?.[0]}</span>}
-                                  </div>
+                                    <UserAvatar 
+                                      key={uid}
+                                      src={u?.photoURL} 
+                                      name={u?.fullName || u?.displayName} 
+                                      size="sm" 
+                                      className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden z-10 hover:z-20 transition-all shadow-lg"
+                                      title={u?.fullName || 'Usuario'}
+                                    />
                                 );
                               })}
                             </div>
@@ -234,7 +286,7 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                         }).map(u => ({
                           value: u.uid,
                           label: u.fullName || 'Usuario',
-                          icon: u.photoURL ? <img src={u.photoURL} className="w-4 h-4 rounded-full object-cover" alt="" /> : <div className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-white border border-slate-700">{u.fullName?.[0]}</div>
+                          icon: <UserAvatar src={u.photoURL} name={u.fullName || u.displayName} size="xs" className="w-4 h-4" />
                         }))
                       ]}
                       disabled={isCollaborator}
@@ -247,13 +299,12 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <InlineDropdown
                         value={task.status}
-                        onChange={async (val: string) => {
-                          onLocalUpdate(task.id!, { status: val as TaskStatus });
-                          await projectService.updateTask(task.id!, { status: val as TaskStatus }, task.projectId, currentUserProfile?.uid);
-                          onUpdate();
-                        }}
+                        onChange={(val: string) => handleStatusChange(task, val as TaskStatus)}
                         trigger={
-                          <div className="hover:scale-105 active:scale-95 transition-all cursor-pointer inline-block">
+                          <div className={cn(
+                            "hover:scale-105 active:scale-95 transition-all inline-block",
+                            task.status === 'canceled' && !canReactivate(task) ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                          )}>
                             <Badge variant={getStatusConfig(task.status).variant} className="text-xs">
                               {getStatusConfig(task.status).label}
                             </Badge>
@@ -262,6 +313,12 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                         options={statusOptions
                           .filter(opt => {
                             if (opt.value === task.status) return true;
+                            
+                            // If canceled, only admins/owners can reactivate
+                            if (task.status === 'canceled') {
+                              return canReactivate(task) && (opt.value === 'todo' || opt.value === 'in-progress');
+                            }
+
                             const allowed = ALLOWED_TRANSITIONS[task.status] || [];
                             if (opt.value === 'published' && !isAdmin) return false;
                             return allowed.includes(opt.value as TaskStatus);
@@ -301,25 +358,6 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                     />
                   </td>
 
-                {/* LINK */}
-                <td className="px-6 py-4 text-center">
-                  {task.link ? (
-                    <a 
-                      href={task.link.startsWith('http') ? task.link : `https://${task.link}`}
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex p-2 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-all active:scale-90"
-                      title="Ver enlace externo"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <LinkIcon size={16} />
-                    </a>
-                  ) : (
-                    <div className="inline-flex p-2 rounded-lg bg-slate-800/30 text-slate-600 cursor-not-allowed opacity-50">
-                      <LinkIcon size={16} />
-                    </div>
-                  )}
-                </td>
 
                   {/* COMPLETED AT (Only in completed view) */}
                   {isCompletedView && (
@@ -436,6 +474,42 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
           </tbody>
         </table>
       </div>
+
+      {/* Reactivation Confirmation Modal */}
+      {showReactivateConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0B101B] border border-white/10 rounded-[32px] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+              <RotateCcw size={32} />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-white tracking-tight uppercase">¿Reactivar Tarea?</h3>
+              <p className="text-sm text-slate-400 leading-relaxed px-4">
+                Esta tarea está cancelada. ¿Confirmas que deseas volver a activarla para que el equipo continúe trabajando?
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowReactivateConfirm(false);
+                  setPendingTaskToReactivate(null);
+                }}
+                className="flex-1 py-4 text-xs font-black text-slate-500 hover:text-white transition-all uppercase tracking-widest"
+              >
+                CANCELAR
+              </button>
+              <button 
+                onClick={confirmReactivate}
+                className="flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-xs font-black text-white shadow-lg shadow-emerald-600/20 transition-all uppercase tracking-widest"
+              >
+                SÍ, ACTIVAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

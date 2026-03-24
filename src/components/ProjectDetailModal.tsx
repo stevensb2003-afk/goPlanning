@@ -17,6 +17,7 @@ import { useToast } from '../context/ToastContext';
 import Badge from './Badge';
 import CustomDropdown from './CustomDropdown';
 import CustomDatePicker from './CustomDatePicker';
+import UserAvatar from './UserAvatar';
 import InlineDropdown from './InlineDropdown';
 
 interface ProjectDetailModalProps {
@@ -129,6 +130,49 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  // -- Reactivation Confirmation State --
+  const [showTaskReactivateConfirm, setShowTaskReactivateConfirm] = useState(false);
+  const [pendingTaskToReactivate, setPendingTaskToReactivate] = useState<{id: string, status: any} | null>(null);
+
+  const canReactivateTask = (task: Task) => {
+    if (!profile) return false;
+    const isAdmin = profile.baseRole === 'admin' || profile.email === 'info@v-creations.com';
+    const isOwner = project.createdBy === user?.uid;
+    return isAdmin || isOwner;
+  };
+
+  const handleStatusChangeInternal = async (task: Task, newStatus: any) => {
+    if (task.status === 'canceled') {
+      if (!canReactivateTask(task)) return;
+      setPendingTaskToReactivate({ id: task.id!, status: newStatus });
+      setShowTaskReactivateConfirm(true);
+      return;
+    }
+
+    try {
+      await handleTaskUpdate(task.id!, { status: newStatus });
+      if (selectedTask?.id === task.id) {
+        setSelectedTask({ ...selectedTask, status: newStatus } as Task);
+      }
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
+  };
+
+  const confirmTaskReactivate = async () => {
+    if (!pendingTaskToReactivate) return;
+    try {
+      await handleTaskUpdate(pendingTaskToReactivate.id, { status: pendingTaskToReactivate.status });
+      if (selectedTask?.id === pendingTaskToReactivate.id) {
+        setSelectedTask({ ...selectedTask, status: pendingTaskToReactivate.status } as Task);
+      }
+      setShowTaskReactivateConfirm(false);
+      setPendingTaskToReactivate(null);
+    } catch (err) {
+      console.error("Error reactivating task:", err);
+    }
+  };
 
   // Priorizar baseRole de AuthContext y manejar carga
   const isAdmin = profile?.baseRole === 'admin' || profile?.email === 'info@v-creations.com';
@@ -663,8 +707,12 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                         autoFocus
                       />
                       <div className="flex gap-4">
-                        <CustomDropdown label="Tipo" value={newTaskType} options={taskTypes.map(t => ({ value: t, label: t }))} onChange={setNewTaskType} />
-                        <CustomDropdown label="Prioridad" value={newTaskPriority} options={priorityOptions} onChange={(val: any) => setNewTaskPriority(val)} />
+                        <div className="flex-1">
+                          <CustomDropdown label="Tipo" value={newTaskType} options={taskTypes.map(t => ({ value: t, label: t }))} onChange={setNewTaskType} />
+                        </div>
+                        <div className="flex-1">
+                          <CustomDropdown label="Prioridad" value={newTaskPriority} options={priorityOptions} onChange={(val: any) => setNewTaskPriority(val)} />
+                        </div>
                       </div>
                       <div className="flex justify-end gap-3 pt-2">
                         <button onClick={() => setIsAddingTask(false)} className="text-xs font-bold text-slate-500 uppercase px-4">Cancelar</button>
@@ -681,7 +729,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                   )}
 
                   {/* Task Groups */}
-                  {['todo', 'in-progress', 'pending-approval', 'published', 'done'].map((status) => {
+                  {['todo', 'in-progress', 'pending-approval', 'published', 'done', 'canceled'].map((status) => {
                     // Soporte para ambos formatos de estado (guion bajo y guion medio)
                     const normalizedStatus = status.replace('-', '_');
                     const getGroupStatus = (s: string) => {
@@ -691,6 +739,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                       if (lower === 'pending-approval' || lower === 'review' || lower === 'pending_approval') return 'pending-approval';
                       if (lower === 'published') return 'published';
                       if (lower === 'done' || lower === 'completed' || lower === 'finalizado') return 'done';
+                      if (lower === 'canceled') return 'canceled';
                       return 'todo'; // Fallback
                     };
 
@@ -779,15 +828,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                                       {getStatusConfig(task.status).label}
                                     </Badge>
                                   }
-                                  onChange={async (val) => {
-                                    try {
-                                      await projectService.updateTask(task.id!, { status: val as any });
-                                      onUpdate();
-                                      setTimeout(fetchData, 100);
-                                    } catch (err) {
-                                      console.error("Error updating status:", err);
-                                    }
-                                  }}
+                                  onChange={(val) => handleStatusChangeInternal(task, val as any)}
                                   className="inline-block"
                                 />
 
@@ -831,7 +872,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                                       ...projectTeam.map(u => ({
                                         value: u.uid,
                                         label: u.fullName || 'Usuario',
-                                        icon: u.photoURL ? <img src={u.photoURL} className="w-4 h-4 rounded-full object-cover" alt="" /> : <div className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-white border border-slate-700">{u.fullName?.[0]}</div>
+                                        icon: <UserAvatar src={u.photoURL} name={u.fullName || u.displayName} size="xs" className="w-4 h-4" />
                                       }))
                                     ]}
                                     onChange={async (val) => {
@@ -851,7 +892,12 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                                       )}>
                                         {task.assignedTo?.[0] ? (
                                           allUsers.find(u => u.uid === task.assignedTo?.[0])?.photoURL ? (
-                                            <img src={allUsers.find(u => u.uid === task.assignedTo?.[0])?.photoURL || ''} className="w-full h-full object-cover" alt="" />
+                                            <UserAvatar 
+                                              src={allUsers.find(u => u.uid === task.assignedTo?.[0])?.photoURL} 
+                                              name={allUsers.find(u => u.uid === task.assignedTo?.[0])?.fullName} 
+                                              size="xs" 
+                                              className="w-full h-full"
+                                            />
                                           ) : (
                                             allUsers.find(u => u.uid === task.assignedTo?.[0])?.fullName?.[0] || '?'
                                           )
@@ -884,7 +930,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                       {projectTeam.map(u => (
                         <div key={u.uid} className="flex items-center gap-3 p-2 hover:bg-white/[0.03] rounded-xl group transition-all">
                           <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {u.photoURL ? <img src={u.photoURL} className="w-full h-full object-cover" alt="" /> : u.fullName?.[0]}
+                                          <UserAvatar src={u.photoURL} name={u.fullName} size="sm" className="w-full h-full" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-200 truncate">{u.fullName}</p>
@@ -947,7 +993,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                                         className="w-full flex items-center gap-3 p-2.5 hover:bg-purple-500/10 rounded-xl transition-all group border border-transparent hover:border-purple-500/20"
                                       >
                                         <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 overflow-hidden ring-1 ring-white/5">
-                                          {u.photoURL ? <img src={u.photoURL} className="w-full h-full object-cover" alt="" /> : u.fullName?.[0]}
+                                          <UserAvatar src={u.photoURL} name={u.fullName} size="sm" className="w-full h-full" />
                                         </div>
                                         <div className="flex-1 text-left min-w-0">
                                           <p className="text-[11px] font-bold text-slate-200 truncate group-hover:text-white">{u.fullName}</p>
@@ -1092,22 +1138,6 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                       }
                     />
                     <InlineDropdown
-                      value={selectedTask.priority || 'medium'}
-                      options={priorityOptions}
-                      onChange={(val) => {
-                        const updatedTask = { ...selectedTask, priority: val as any };
-                        setSelectedTask(updatedTask);
-                        handleTaskUpdate(selectedTask.id!, { priority: val as any });
-                      }}
-                      disabled={!isAdmin && project.createdBy !== user?.uid || isReadOnly}
-                      trigger={
-                        <Badge variant={getPriorityConfig(selectedTask.priority || 'medium').variant} className="text-[10px] px-4 py-1.5 font-bold uppercase tracking-widest cursor-pointer hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5">
-                          <Zap size={10} className="opacity-70" />
-                          {getPriorityConfig(selectedTask.priority || 'medium').label}
-                        </Badge>
-                      }
-                    />
-                    <InlineDropdown
                       value={selectedTask.status}
                       options={statusOptions.filter(option => 
                         option.value === selectedTask.status || 
@@ -1119,11 +1149,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                           {getStatusConfig(selectedTask.status).label}
                         </Badge>
                       }
-                      onChange={(val) => {
-                        const updatedTask = { ...selectedTask, status: val as any };
-                        setSelectedTask(updatedTask);
-                        handleTaskUpdate(selectedTask.id!, { status: val as any });
-                      }}
+                      onChange={(val) => handleStatusChangeInternal(selectedTask, val as any)}
                       disabled={isReadOnly}
                     />
                   </div>
@@ -1147,7 +1173,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                             ...projectTeam.map(u => ({
                               value: u.uid,
                               label: u.fullName || 'Usuario',
-                              icon: u.photoURL ? <img src={u.photoURL} className="w-4 h-4 rounded-full object-cover" alt="" /> : <div className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-white border border-slate-700">{u.fullName?.[0]}</div>
+                              icon: <UserAvatar src={u.photoURL} name={u.fullName || u.displayName} size="xs" className="w-4 h-4" />
                             }))
                           ]}
                           onChange={(val) => {
@@ -1160,17 +1186,12 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                             <div className="flex items-center gap-2 cursor-pointer group/trigger">
                               {selectedTask.assignedTo?.[0] ? (
                                 <>
-                                  {projectTeam.find(u => u.uid === selectedTask.assignedTo?.[0])?.photoURL ? (
-                                    <img 
-                                      src={projectTeam.find(u => u.uid === selectedTask.assignedTo?.[0])?.photoURL || undefined} 
-                                      className="w-6 h-6 rounded-full object-cover border border-white/10" 
-                                      alt="" 
-                                    />
-                                  ) : (
-                                    <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white border border-slate-700">
-                                      {projectTeam.find(u => u.uid === selectedTask.assignedTo?.[0])?.fullName?.[0] || 'U'}
-                                    </div>
-                                  )}
+                                  <UserAvatar 
+                                    src={projectTeam.find(u => u.uid === selectedTask.assignedTo?.[0])?.photoURL || undefined} 
+                                    name={projectTeam.find(u => u.uid === selectedTask.assignedTo?.[0])?.fullName || 'U'} 
+                                    size="sm" 
+                                    className="w-6 h-6 rounded-full object-cover border border-white/10" 
+                                  />
                                   <p className="text-sm font-bold text-white leading-tight group-hover/trigger:text-purple-400 transition-colors">
                                     {projectTeam.find(u => u.uid === selectedTask.assignedTo?.[0])?.fullName || 'No asignado'}
                                   </p>
@@ -1217,17 +1238,12 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                       <div className="min-h-[32px] flex items-center gap-2">
                         {selectedTask.createdBy ? (
                           <>
-                            {allUsers.find(u => u.uid === selectedTask.createdBy)?.photoURL ? (
-                              <img 
-                                src={allUsers.find(u => u.uid === selectedTask.createdBy)?.photoURL || undefined} 
-                                className="w-6 h-6 rounded-full object-cover border border-white/10" 
-                                alt="" 
-                              />
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white border border-slate-700">
-                                {allUsers.find(u => u.uid === selectedTask.createdBy)?.fullName?.[0] || 'S'}
-                              </div>
-                            )}
+                            <UserAvatar 
+                              src={allUsers.find(u => u.uid === selectedTask.createdBy)?.photoURL || undefined} 
+                              name={allUsers.find(u => u.uid === selectedTask.createdBy)?.fullName || 'S'} 
+                              size="sm" 
+                              className="w-6 h-6 rounded-full object-cover border border-white/10" 
+                            />
                             <p className="text-sm font-bold text-white leading-tight">
                               {allUsers.find(u => u.uid === selectedTask.createdBy)?.fullName || 'Sistema'}
                             </p>
@@ -1288,7 +1304,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                   <div className="p-8 border-b border-white/5 bg-[#0B101B]/50 backdrop-blur-md sticky top-0 z-10">
                     <div className="flex gap-4 items-start">
                       <div className="w-10 h-10 rounded-xl bg-slate-800 flex-shrink-0 flex items-center justify-center font-bold text-white overflow-hidden">
-                        {user?.photoURL ? <img src={user.photoURL} alt="" /> : 'U'}
+                        <UserAvatar src={user?.photoURL} name={profile?.fullName || user?.displayName} size="xs" />
                       </div>
                       <div className="flex-1 space-y-3">
                         <div className="relative">
@@ -1321,7 +1337,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                                         className="w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors text-left"
                                       >
                                         <div className="w-8 h-8 rounded-lg bg-slate-800 flex-shrink-0 flex items-center justify-center font-bold text-white overflow-hidden text-xs">
-                                          {u.photoURL ? <img src={u.photoURL} alt="" /> : (u.fullName?.[0] || 'U')}
+                                          <UserAvatar src={u.photoURL} name={u.fullName || u.displayName} size="sm" className="w-full h-full" />
                                         </div>
                                         <div>
                                           <p className="text-xs font-bold text-white">{u.fullName}</p>
@@ -1356,7 +1372,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                     {comments.map(c => (
                       <div key={c.id} className="flex gap-4 animate-in slide-in-from-right-2 duration-300">
                         <div className="w-10 h-10 rounded-xl bg-slate-800 flex-shrink-0 flex items-center justify-center font-bold text-white overflow-hidden">
-                          {c.userPhoto ? <img src={c.userPhoto} className="w-full h-full object-cover" alt="" /> : c.userName[0]}
+                          <UserAvatar src={c.userPhoto} name={c.userName} size="sm" className="w-full h-full" />
                         </div>
                         <div className="flex-1 space-y-2">
                           <div className="flex flex-col">
@@ -1431,6 +1447,42 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
             </div>
           )}
         </AnimatePresence>
+
+        {/* Task Reactivation Confirmation Modal */}
+        {showTaskReactivateConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 pointer-events-auto">
+            <div className="bg-[#0B101B] border border-white/10 rounded-[32px] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+                <RotateCcw size={32} />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-white tracking-tight uppercase">¿Reactivar Tarea?</h3>
+                <p className="text-sm text-slate-400 leading-relaxed px-4">
+                  Esta tarea está cancelada. ¿Confirmas que deseas volver a activarla para que el equipo continúe trabajando?
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    setShowTaskReactivateConfirm(false);
+                    setPendingTaskToReactivate(null);
+                  }}
+                  className="flex-1 py-4 text-xs font-black text-slate-500 hover:text-white transition-all uppercase tracking-widest"
+                >
+                  CANCELAR
+                </button>
+                <button 
+                  onClick={confirmTaskReactivate}
+                  className="flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-xs font-black text-white shadow-lg shadow-emerald-600/20 transition-all uppercase tracking-widest"
+                >
+                  SÍ, ACTIVAR
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
     </div>
   );
