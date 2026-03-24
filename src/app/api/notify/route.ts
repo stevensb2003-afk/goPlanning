@@ -1,37 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 
-// Inicializar el SDK de Admin solo una vez
-if (!admin.apps.length) {
-  try {
-    const saEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!saEnv) {
-      console.error("CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is missing!");
-    } else {
-      const serviceAccount = JSON.parse(saEnv);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      console.log("Firebase Admin initialized successfully");
-    }
-  } catch (error) {
-    console.error("Firebase admin initialization error:", error);
+// Función para obtener la app de admin de forma segura
+function getAdminApp() {
+  if (admin.apps.length > 0) {
+    return admin.apps[0];
   }
-} else {
-  // Ya está inicializado, nos aseguramos de usar la app por defecto
-  admin.app();
+
+  const saEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!saEnv) {
+    throw new Error("ENVIRONMENT_ERROR: FIREBASE_SERVICE_ACCOUNT is missing");
+  }
+
+  try {
+    const serviceAccount = JSON.parse(saEnv);
+    return admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch (err: any) {
+    throw new Error(`JSON_ERROR: Could not parse FIREBASE_SERVICE_ACCOUNT - ${err.message}`);
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const app = getAdminApp();
     const { userId, title, body, data } = await req.json();
 
     if (!userId || !title || !body) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Obtener tokens de FCM del usuario desde Firestore
-    const userDoc = await admin.firestore().collection("users").doc(userId).get();
+    // Usar la instancia específica de la app
+    const userDoc = await app.firestore().collection("users").doc(userId).get();
     
     if (!userDoc.exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -62,8 +63,8 @@ export async function POST(req: NextRequest) {
       },
     }));
 
-    // Enviar mensajes de forma masiva
-    const responses = await admin.messaging().sendEach(messages);
+    // Enviar mensajes de forma masiva usando la instancia de messaging de la app
+    const responses = await app.messaging().sendEach(messages);
     
     const successCount = responses.successCount;
     const failureCount = responses.failureCount;
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
     if (failureCount > 0) {
       const validTokens = tokens.filter((_, index) => responses.responses[index].success);
       if (validTokens.length !== tokens.length) {
-        await admin.firestore().collection("users").doc(userId).update({
+        await app.firestore().collection("users").doc(userId).update({
           fcmTokens: validTokens
         });
       }
