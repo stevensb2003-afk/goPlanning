@@ -88,37 +88,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (authenticatedUser) {
-        // Enforce loading state TRUE before fetching profile to prevent redirect races
-        setLoading(true);
         setUser(authenticatedUser);
-        
-        unsubscribeProfile = onSnapshot(
-          doc(db, "users", authenticatedUser.uid),
-          { includeMetadataChanges: true },
-          (snapshot) => {
-            // Ignore optimistic local writes that haven't been confirmed by the server.
-            // This stops the app from redirecting prematurely.
-            if (snapshot.metadata.hasPendingWrites) {
-              return;
-            }
+        setLoading(true);
 
-            if (snapshot.exists()) {
-              setProfile(snapshot.data() as UserProfile);
-              setLoading(false);
-            } else if (!snapshot.metadata.fromCache) {
-              // Server confirmed it doesn't exist
-              setProfile(null);
-              setLoading(false);
+        const fetchAndSubscribe = async () => {
+          try {
+            // First, do a definitive server-side check
+            const userRef = doc(db, "users", authenticatedUser.uid);
+            const serverSnap = await getDoc(userRef);
+            
+            if (serverSnap.exists()) {
+              setProfile(serverSnap.data() as UserProfile);
             } else {
-              // Cache is empty but server hasn't responded yet
-              // Keep loading = true
-              console.log("Waiting for server profile...");
+              setProfile(null);
             }
-          }, (error) => {
-            console.error("Error in profile listener:", error);
+            
+            // Now that we have the initial definitive state, we can stop "hard" loading
+            setLoading(false);
+
+            // Then, subscribe to future changes
+            unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
+              // Ignore local optimistic updates to prevent flicker/redirects
+              if (snapshot.metadata.hasPendingWrites) return;
+              
+              if (snapshot.exists()) {
+                setProfile(snapshot.data() as UserProfile);
+              } else if (!snapshot.metadata.fromCache) {
+                // Only clobber if the server confirms it's gone
+                setProfile(null);
+              }
+            });
+          } catch (error) {
+            console.error("Error loading profile:", error);
             setLoading(false);
           }
-        );
+        };
+
+        fetchAndSubscribe();
       } else {
         setUser(null);
         setProfile(null);
