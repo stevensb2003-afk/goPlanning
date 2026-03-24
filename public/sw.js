@@ -13,7 +13,7 @@ const urlsToCache = [
 // Initialize Firebase inside the Service Worker
 firebase.initializeApp({
   projectId: "goplanning-audiovisual-church",
-  appId: "1:666333207200:web:af524631eacff67f37c7c5",
+  appId: "1:666333207200:web:588efe3377a2132e37c7c5",
   storageBucket: "goplanning-audiovisual-church.firebasestorage.app",
   apiKey: "AIzaSyDcdRO6qRxEIXwDeY2JKWQjW5QrL0CxT50",
   authDomain: "goplanning-audiovisual-church.firebaseapp.com",
@@ -67,8 +67,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'GoPlanning';
   const notificationOptions = {
     body: payload.notification?.body || 'Nueva actualización en tus tareas.',
-    icon: 'https://goplanning-audiovisual-church.web.app/favicon.svg', // Premium Logo
-    badge: 'https://goplanning-audiovisual-church.web.app/favicon.svg',
+    icon: '/favicon.svg', // Icono relativo al dominio actual
+    badge: '/favicon.svg',
     data: {
       url: payload.data?.url || '/'
     },
