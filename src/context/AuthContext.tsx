@@ -14,6 +14,7 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { userService, UserProfile } from "@/lib/services/userService";
+import { notificationService } from "@/lib/services/notificationService";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface AuthContextType {
@@ -41,8 +42,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sync token automatically if permission is already granted
   useEffect(() => {
-    if (user && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      syncToken();
+    if (user && typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        syncToken();
+      } else if (Notification.permission === 'default') {
+        // Auto-prompt for notifications if the user is logged in
+        requestPermission();
+      }
     }
   }, [user]);
 
@@ -98,10 +104,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (snapshot.exists()) {
               setProfile(snapshot.data() as UserProfile);
-            } else {
+              setLoading(false);
+            } else if (!snapshot.metadata.fromCache) {
+              // Server confirmed it doesn't exist
               setProfile(null);
+              setLoading(false);
+            } else {
+              // Cache is empty but server hasn't responded yet
+              // Keep loading = true
+              console.log("Waiting for server profile...");
             }
-            setLoading(false);
           }, (error) => {
             console.error("Error in profile listener:", error);
             setLoading(false);
@@ -174,6 +186,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = profile?.baseRole === 'admin' || profile?.email === 'info@v-creations.com';
   const isCollaborator = profile?.baseRole === 'collaborator';
+
+  // Handle deferred welcome notification
+  useEffect(() => {
+    if (user && profile && permission === 'granted' && typeof window !== 'undefined') {
+      const pending = localStorage.getItem('pendingWelcomeNotification');
+      if (pending === 'true') {
+        notificationService.sendWelcomeNotification(user.uid, profile.fullName || 'Usuario');
+        localStorage.removeItem('pendingWelcomeNotification');
+      }
+    }
+  }, [user, profile, permission]);
 
   return (
     <AuthContext.Provider value={{ 

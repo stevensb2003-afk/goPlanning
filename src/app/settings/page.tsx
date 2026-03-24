@@ -206,6 +206,16 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSendTestNotification = async () => {
+    if (!profile?.uid) return;
+    try {
+      await notificationService.sendTestNotification(profile.uid);
+      setNotification({ message: 'Notificación de prueba enviada', type: 'success' });
+    } catch (error) {
+      setNotification({ message: 'Error al enviar prueba', type: 'error' });
+    }
+  };
+
   const hasChanges = 
     profileData.fullName !== (profile?.fullName || '') ||
     profileData.phoneNumber !== (profile?.phoneNumber || '') ||
@@ -606,6 +616,16 @@ export default function SettingsPage() {
                             checked={notificationSettings.highPriority}
                             onChange={(val) => handleNotificationSettingsSave({ highPriority: val })}
                           />
+                        </div>
+                        
+                        <div className="mt-8 pt-8 border-t border-white/5">
+                          <button
+                            onClick={handleSendTestNotification}
+                            className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-300 font-bold text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                          >
+                            <Bell size={16} className="text-purple-400" />
+                            Probar Notificación
+                          </button>
                         </div>
                       </div>
 

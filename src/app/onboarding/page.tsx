@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { UserCircle, Phone, ArrowRight, Check, Briefcase } from "lucide-react";
 import { configService } from "@/lib/services/configService";
+import { notificationService } from "@/lib/services/notificationService";
 
 export default function OnboardingPage() {
   const { user, profile, logout } = useAuth();
@@ -56,6 +57,11 @@ export default function OnboardingPage() {
       };
       
       await setDoc(doc(db, "users", user.uid), userData); 
+      
+      // Set flag for welcome notification once permission is granted
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pendingWelcomeNotification', 'true');
+      }
       
       // We don't need manual redirect here anymore, AuthContext handles it
     } catch (error: any) {

@@ -156,4 +156,23 @@ export const notificationService = {
     return batch.commit();
   },
 
+  async sendWelcomeNotification(userId: string, userName: string) {
+    return this.createNotification({
+      userId,
+      type: 'assignment', // Use assignment as proxy or just a generic type
+      title: '¡Bienvenido a GoPlanning! 🚀',
+      message: `Hola ${userName}, gracias por unirte. Ahora recibirás actualizaciones de tus tareas aquí.`,
+      link: '/'
+    });
+  },
+
+  async sendTestNotification(userId: string) {
+    return this.createNotification({
+      userId,
+      type: 'high-priority',
+      title: 'Notificación de Prueba ✅',
+      message: 'Esto confirma que tus notificaciones PWA están configuradas correctamente y el icono se ve genial.',
+      link: '/settings'
+    });
+  }
 };
