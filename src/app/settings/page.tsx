@@ -269,7 +269,8 @@ export default function SettingsPage() {
       const sortedData: AppConfig = {
         projectTypes: [...data.projectTypes].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
         taskTypes: [...data.taskTypes].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
-        collaboratorSpecialties: [...(data.collaboratorSpecialties || [])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+        collaboratorSpecialties: [...(data.collaboratorSpecialties || [])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
+        inviteLink: data.inviteLink || "https://go-planning.app/signup"
       };
       setConfig(sortedData);
     };

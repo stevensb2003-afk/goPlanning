@@ -4,13 +4,22 @@ import * as admin from "firebase-admin";
 // Inicializar el SDK de Admin solo una vez
 if (!admin.apps.length) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || "{}");
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
+    const saEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!saEnv) {
+      console.error("CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is missing!");
+    } else {
+      const serviceAccount = JSON.parse(saEnv);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      console.log("Firebase Admin initialized successfully");
+    }
   } catch (error) {
-    console.error("Firebase admin initialization error", error);
+    console.error("Firebase admin initialization error:", error);
   }
+} else {
+  // Ya está inicializado, nos aseguramos de usar la app por defecto
+  admin.app();
 }
 
 export async function POST(req: NextRequest) {
