@@ -5,6 +5,6 @@ kind: "AppHostingConfig"
 schemaVersion: "v1"
 
 # Environment variables and secrets
-secrets:
+env:
   - variable: "FIREBASE_SERVICE_ACCOUNT"
     secret: "FIREBASE_SERVICE_ACCOUNT"
