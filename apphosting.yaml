@@ -8,3 +8,4 @@ schemaVersion: "v1"
 env:
   - variable: "FIREBASE_SERVICE_ACCOUNT"
     secret: "FIREBASE_SERVICE_ACCOUNT"
+    availability: ["RUNTIME"] # Only needed when the app is running
