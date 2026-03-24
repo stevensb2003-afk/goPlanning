@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 
 // Función para obtener la app de admin de forma segura
-function getAdminApp() {
+function getAdminApp(): admin.app.App {
   if (admin.apps.length > 0) {
-    return admin.apps[0];
+    const app = admin.apps[0];
+    if (app) return app;
   }
 
   const saEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
