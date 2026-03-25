@@ -1,5 +1,6 @@
 "use client";
-import TaskTable, { priorityOptions } from '@/components/TaskTable';
+import TaskTable from '@/components/TaskTable';
+import { priorityOptions } from '@/lib/constants';
 import TaskDetailDrawer from '@/components/TaskDetailDrawer';
 import InlineDropdown from '@/components/InlineDropdown';
 import { Filter, ArrowUpDown, Search, User, CheckCircle2, Layers, Users, Plus, AlertCircle, Circle, Clock, Snowflake, Layout } from 'lucide-react';

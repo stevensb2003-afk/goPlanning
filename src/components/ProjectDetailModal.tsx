@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback, useRef, useLayoutEffect, useMe
 import { 
   X as XIcon, Calendar, CheckCircle2, Plus, Users, 
   Archive, Trash2, Loader2, ChevronRight, MessageSquare, 
-  Send, UserPlus, History, ShieldCheck, Snowflake, Search,
-  Clock, Check, Circle, XCircle, ArrowDown, Minus, ArrowUp, AlertCircle,
+  Send, UserPlus, History, ShieldCheck, Search,
+  Clock, Check, Circle, XCircle, ArrowDown, Minus, ArrowUp, AlertCircle, Snowflake,
   Zap, Tag, CircleDashed, Pencil, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { projectService, Task, Project, ALLOWED_TRANSITIONS } from '@/lib/services/projectService';
+import { projectService, Task, Project, ALLOWED_TRANSITIONS, TaskStatus } from '@/lib/services/projectService';
+import { statusOptions, priorityOptions, getStatusConfig, getPriorityConfig } from '@/lib/constants';
 import { userService, UserProfile } from '@/lib/services/userService';
 import { commentService, Comment } from '@/lib/services/commentService';
 import { configService } from '@/lib/services/configService';
@@ -29,22 +30,7 @@ interface ProjectDetailModalProps {
 
 // Usamos TaskStatus e ALLOWED_TRANSITIONS importados del servicio
 
-const statusOptions = [
-  { value: 'todo' as const, label: 'Pendiente', icon: <Circle size={14} />, color: '#94a3b8', variant: 'slate' as const },
-  { value: 'in-progress' as const, label: 'En Progreso', icon: <Clock size={14} />, color: '#38bdf8', variant: 'cyan' as const },
-  { value: 'pending-approval' as const, label: 'Por Aprobar', icon: <Clock size={14} />, color: '#f472b6', variant: 'pink' as const },
-  { value: 'published' as const, label: 'Publicar / Compartir', icon: <Clock size={14} />, color: '#818cf8', variant: 'indigo' as const },
-  { value: 'frozen' as const, label: 'Congelado', icon: <Snowflake size={14} />, color: '#fbbf24', variant: 'amber' as const },
-  { value: 'done' as const, label: 'Completado', icon: <CheckCircle2 size={14} />, color: '#34d399', variant: 'emerald' as const },
-  { value: 'canceled' as const, label: 'Cancelado', icon: <XCircle size={14} />, color: '#f87171', variant: 'rose' as const },
-];
 
-const priorityOptions = [
-  { value: 'low' as const, label: 'Baja', icon: <ArrowDown size={14} />, variant: 'slate' as const },
-  { value: 'medium' as const, label: 'Media', icon: <Minus size={14} />, variant: 'indigo' as const },
-  { value: 'high' as const, label: 'Alta', icon: <ArrowUp size={14} />, variant: 'amber' as const },
-  { value: 'urgent' as const, label: 'Urgente', icon: <AlertCircle size={14} />, variant: 'rose' as const },
-];
 
 const projectStatusOptions = [
   { value: 'active', label: 'Activo', variant: 'purple' as const },
@@ -52,8 +38,7 @@ const projectStatusOptions = [
   { value: 'canceled', label: 'Archivado', variant: 'slate' as const }
 ];
 
-const getStatusConfig = (status: string) => statusOptions.find(o => o.value === status) || statusOptions[0];
-const getPriorityConfig = (priority: string) => priorityOptions.find(o => o.value === priority) || priorityOptions[1];
+
 
 export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate }: ProjectDetailModalProps) {
   const { user, profile } = useAuth();
@@ -745,7 +730,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
 
                     const groupTasks = tasks.filter(t => getGroupStatus(t.status) === status);
                     if (groupTasks.length === 0 && status !== 'todo') return null;
-                    const config = getStatusConfig(status);
+                    const config = getStatusConfig(status as TaskStatus);
                     
                     return (
                       <div key={status} className="space-y-4">

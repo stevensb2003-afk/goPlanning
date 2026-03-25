@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Send, Paperclip, MessageSquare, Clock, User as UserIcon, CheckCircle2, UserPlus, Calendar, Check, ShieldCheck, History, ArrowDown, ArrowUp, Minus, AlertCircle, AlignLeft, Edit3 } from 'lucide-react';
+import { X, Send, Paperclip, MessageSquare, Clock, User as UserIcon, UserPlus, Calendar, AlignLeft, Edit3, RotateCcw, CheckCircle2, Check, ShieldCheck, History as HistoryIcon, ArrowUp, AlertCircle } from 'lucide-react';
 import Badge from './Badge';
 import { useAuth } from '@/context/AuthContext';
 import { commentService } from '@/lib/services/commentService';
 import { projectService, type Task, type TaskStatus, ALLOWED_TRANSITIONS } from '@/lib/services/projectService';
+import { statusOptions, priorityOptions, getStatusConfig, getPriorityConfig } from '@/lib/constants';
 import InlineDropdown from './InlineDropdown';
 import CustomDatePicker from './CustomDatePicker';
 import { serverTimestamp } from 'firebase/firestore';
@@ -24,26 +25,7 @@ interface TaskDetailDrawerProps {
   onLocalUpdate?: (taskId: string, updates: any) => void;
 }
 
-const statusOptions = [
-  { value: 'todo', label: 'Pendiente', variant: 'slate' as const, icon: <div className="w-2 h-2 rounded-full bg-slate-500" /> },
-  { value: 'in-progress', label: 'En Progreso', variant: 'cyan' as const, icon: <div className="w-2 h-2 rounded-full bg-cyan-500" /> },
-  { value: 'pending-approval', label: 'Por Aprobar', variant: 'pink' as const, icon: <div className="w-2 h-2 rounded-full bg-pink-500" /> },
-  { value: 'published', label: 'Publicar / Compartir', variant: 'indigo' as const, icon: <div className="w-2 h-2 rounded-full bg-indigo-500" /> },
-  { value: 'frozen', label: 'Congelado', variant: 'amber' as const, icon: <div className="w-2 h-2 rounded-full bg-amber-500" /> },
-  { value: 'done', label: 'Completado', variant: 'emerald' as const, icon: <div className="w-2 h-2 rounded-full bg-emerald-500" /> },
-  { value: 'canceled', label: 'Cancelado', variant: 'rose' as const, icon: <div className="w-2 h-2 rounded-full bg-rose-500" /> },
-];
 
-export const priorityOptions = [
-  { value: 'low' as const, label: 'Baja', icon: <ArrowDown size={14} />, variant: 'slate' as const },
-  { value: 'medium' as const, label: 'Media', icon: <Minus size={14} />, variant: 'indigo' as const },
-  { value: 'high' as const, label: 'Alta', icon: <ArrowUp size={14} />, variant: 'amber' as const },
-  { value: 'urgent' as const, label: 'Urgente', icon: <AlertCircle size={14} />, variant: 'rose' as const },
-];
-
-export function getPriorityConfig(priority?: string) {
-  return priorityOptions.find(opt => opt.value === priority) || priorityOptions[1];
-}
 
 export default function TaskDetailDrawer({ 
   isOpen, 
@@ -463,7 +445,7 @@ export default function TaskDetailDrawer({
               </div>
               <div className="space-y-2">
                 <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                  <History size={12} /> Aprobado el
+                  <HistoryIcon size={12} /> Aprobado el
                 </p>
                 <div className="p-1">
                   <p className="text-xs font-semibold text-emerald-400">
