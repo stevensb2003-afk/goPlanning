@@ -4,8 +4,12 @@
 kind: "AppHostingConfig"
 schemaVersion: "v1"
 
-# Environment variables and secrets
+# Environment variables
 env:
   - variable: "FIREBASE_SERVICE_ACCOUNT"
-    secret: "FIREBASE_SERVICE_ACCOUNT"
-    availability: ["RUNTIME"] # Only needed when the app is running
+    value: "${{ params.FIREBASE_SERVICE_ACCOUNT }}"
+
+# Secret parameters
+params:
+  - name: "FIREBASE_SERVICE_ACCOUNT"
+    type: "secret"
