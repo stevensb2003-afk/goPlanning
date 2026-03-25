@@ -3,6 +3,7 @@ import { Search, Bell, Plus, Briefcase, CheckSquare, Loader2, X } from 'lucide-r
 import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { projectService, Project, Task } from '@/lib/services/projectService';
+import { getStatusConfig } from '@/lib/constants';
 import NotificationBell from './NotificationBell';
 
 export default function Header() {
@@ -63,8 +64,10 @@ export default function Header() {
     ).slice(0, 5);
 
     const matchedTasks = tasks.filter(t => 
+      t.status !== 'canceled' && (
       t.title.toLowerCase().includes(searchTerm) || 
       (t.description && t.description.toLowerCase().includes(searchTerm))
+      )
     ).slice(0, 5);
 
     setFilteredResults({ projects: matchedProjects, tasks: matchedTasks });
@@ -160,7 +163,17 @@ export default function Header() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-200 truncate">{task.title}</p>
-                        <p className="text-[10px] text-slate-500 truncate">Estado: {task.status}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Estado:</span>
+                          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5">
+                            <span style={{ color: getStatusConfig(task.status).color }}>
+                              {getStatusConfig(task.status).icon}
+                            </span>
+                            <span className="text-[9px] font-bold whitespace-nowrap" style={{ color: getStatusConfig(task.status).color }}>
+                              {getStatusConfig(task.status).label.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </button>
                   ))}
