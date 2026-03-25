@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Send, Paperclip, MessageSquare, Clock, User as UserIcon, CheckCircle2, UserPlus, Calendar, Check, ShieldCheck, History, ArrowDown, ArrowUp, Minus, AlertCircle, AlignLeft, Edit3 } from 'lucide-react';
 import Badge from './Badge';
 import { useAuth } from '@/context/AuthContext';
@@ -656,8 +657,8 @@ export default function TaskDetailDrawer({
       </div>
 
       {/* Confirmation Modal for Reactivation */}
-      {showReactivateConfirm && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      {showReactivateConfirm && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowReactivateConfirm(false)}></div>
           <div className="relative glass-card bg-slate-900 w-full max-w-sm rounded-[2rem] overflow-hidden animate-in fade-in zoom-in duration-300 border border-white/10 shadow-2xl">
             <div className="p-6 text-center space-y-4">
@@ -684,7 +685,8 @@ export default function TaskDetailDrawer({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Badge from './Badge';
 import { 
   MoreHorizontal, 
@@ -476,8 +477,8 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
       </div>
 
       {/* Reactivation Confirmation Modal */}
-      {showReactivateConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      {showReactivateConfirm && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#0B101B] border border-white/10 rounded-[32px] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
               <RotateCcw size={32} />
@@ -508,7 +509,8 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
