@@ -77,7 +77,7 @@ export default function Header() {
 
 
   return (
-    <header className="h-20 border-b border-white/10 flex items-center justify-between gap-4 px-4 sm:px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-20">
+    <header className="h-20 border-b border-white/10 flex items-center justify-between gap-4 px-4 sm:px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-40">
       <div className="flex items-center gap-4 flex-1">
         <div className="relative w-full max-w-md" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
