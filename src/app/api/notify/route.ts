@@ -71,7 +71,20 @@ export async function POST(req: NextRequest) {
     }
 
     const userData = userDoc.data();
-    const tokens: string[] = userData?.fcmTokens || [];
+    
+    // 1. Check if user has disabled push notifications globally
+    if (userData?.notificationSettings?.pushEnabled === false) {
+      return NextResponse.json({ message: "Push notifications are disabled for this user" });
+    }
+
+    // 2. If a specific type is provided, check if that type is enabled
+    const type = data?.type;
+    if (type && userData?.notificationSettings && userData.notificationSettings[type] === false) {
+      return NextResponse.json({ message: `Notifications for ${type} are disabled for this user` });
+    }
+
+    // 3. Deduplicate tokens to avoid multiple notifications on the same device
+    const tokens: string[] = Array.from(new Set(userData?.fcmTokens || []));
 
     if (tokens.length === 0) {
       return NextResponse.json({ message: "No tokens found for user" });
@@ -79,12 +92,10 @@ export async function POST(req: NextRequest) {
 
     const messages: admin.messaging.Message[] = tokens.map((token) => ({
       token,
-      // Standard notification block (for OS level handling)
       notification: {
         title,
         body,
       },
-      // Data block (for our robust SW listener)
       data: {
         ...data,
         title,

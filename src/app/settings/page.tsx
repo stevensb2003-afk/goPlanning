@@ -590,24 +590,29 @@ export default function SettingsPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <div className={`bg-slate-900 border ${
-                          notificationPermission === 'granted' && fcmToken ? 'border-emerald-500/20 text-emerald-400' :
+                          notificationPermission === 'granted' && fcmToken && notificationSettings.pushEnabled ? 'border-emerald-500/20 text-emerald-400' :
                           notificationPermission === 'denied' ? 'border-red-500/20 text-red-500' :
+                          !notificationSettings.pushEnabled ? 'border-amber-500/20 text-amber-500' :
                           'border-amber-500/20 text-amber-500'
                         } rounded-2xl px-4 py-2 flex items-center gap-3 shadow-lg`}>
                           <div className={`w-2 h-2 rounded-full ${
-                            notificationPermission === 'granted' && fcmToken ? 'bg-emerald-400 animate-pulse' :
+                            notificationPermission === 'granted' && fcmToken && notificationSettings.pushEnabled ? 'bg-emerald-400 animate-pulse' :
                             notificationPermission === 'denied' ? 'bg-red-500' :
                             'bg-amber-500'
                           }`} />
                           <span className="text-[10px] font-black uppercase tracking-widest text-inherit">
-                            {notificationPermission === 'granted' && fcmToken ? 'Activo en este equipo' :
-                             notificationPermission === 'denied' ? 'Bloqueado en este equipo' :
+                            {notificationPermission === 'granted' && fcmToken && notificationSettings.pushEnabled ? 'Activo en este equipo' :
+                             notificationPermission === 'denied' ? 'Bloqueado en el sistema' :
+                             !notificationSettings.pushEnabled ? 'Desactivado en App' :
                              !fcmToken && notificationPermission === 'granted' ? 'Sincronizando...' :
                              'Pendiente de Activar'}
                           </span>
                         </div>
                         {notificationPermission === 'denied' && (
-                          <span className="text-[9px] text-red-500/70 font-bold uppercase tracking-tighter">Habilita permisos en tu navegador</span>
+                          <span className="text-[9px] text-red-500/70 font-bold uppercase tracking-tighter">Habilita permisos en los ajustes de tu celular/navegador</span>
+                        )}
+                        {!notificationSettings.pushEnabled && notificationPermission === 'granted' && (
+                          <span className="text-[9px] text-amber-500/70 font-bold uppercase tracking-tighter">Activa el switch de abajo para recibir alertas</span>
                         )}
                       </div>
                     </div>
