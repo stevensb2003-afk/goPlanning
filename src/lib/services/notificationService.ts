@@ -43,13 +43,13 @@ export const notificationService = {
       const profile = userDoc.docs[0].data() as UserProfile;
       const settings = profile.notificationSettings || this.defaultSettings;
 
-      // 2. Map notification type to setting key
+      // 2. Map notification type to setting key (Always PLURAL to match Firestore)
       const settingMap: Record<NotificationType, keyof NotificationSettings> = {
         'comment': 'comments',
         'mention': 'mentions',
         'assignment': 'assignments',
         'approval': 'approvals',
-        'pending-approval': 'approvals', // Admins receive this if approvals is enabled
+        'pending-approval': 'approvals',
         'overdue': 'overdue',
         'deadline': 'deadlines',
         'high-priority': 'highPriority'
@@ -57,8 +57,9 @@ export const notificationService = {
 
       const settingKey = settingMap[data.type];
       
-      // 3. Skip if user has disabled this category
-      if (settings && settingKey && !settings[settingKey]) {
+      // 3. Skip ONLY if settings are explicitly present and set to false
+      // If a setting is missing, we default to TRUE for better UX
+      if (settings && settingKey && settings[settingKey] === false) {
         return null;
       }
 

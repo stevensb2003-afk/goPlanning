@@ -73,15 +73,14 @@ export async function POST(req: NextRequest) {
     const userData = userDoc.data();
     
     // 1. Check if user has disabled push notifications globally
+    // We only block if the preference is EXPLICITLY set to false
     if (userData?.notificationSettings?.pushEnabled === false) {
       return NextResponse.json({ message: "Push notifications are disabled for this user" });
     }
 
-    // 2. If a specific type is provided, check if that type is enabled
-    const type = data?.type;
-    if (type && userData?.notificationSettings && userData.notificationSettings[type] === false) {
-      return NextResponse.json({ message: `Notifications for ${type} are disabled for this user` });
-    }
+    // 2. Send the message. 
+    // Sub-category checks (assignments, mentions, etc.) are handled by the 
+    // notificationService before even calling this endpoint, to avoid data sync issues.
 
     // 3. Deduplicate tokens to avoid multiple notifications on the same device
     const tokens: string[] = Array.from(new Set(userData?.fcmTokens || []));

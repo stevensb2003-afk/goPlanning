@@ -103,7 +103,7 @@ export default function MemberDetailModal({ isOpen, onClose, user, tasks, produc
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Email</p>
                         <div className="flex items-center gap-2 group/copy cursor-pointer" onClick={() => handleCopy(user.email || '', 'email')}>
                             <p className="text-sm font-bold break-all">{user.email || 'No proporcionado'}</p>
-                            <div className={`p-1.5 rounded-lg transition-all ${copiedField === 'email' ? 'bg-emerald-500/10 text-emerald-400 scale-110' : 'bg-white/5 text-slate-500 opacity-0 group-hover/row:opacity-100 hover:text-white'}`}>
+                            <div className={`p-1.5 rounded-lg transition-all ${copiedField === 'email' ? 'bg-emerald-500/10 text-emerald-400 scale-110' : 'bg-white/10 text-slate-400 hover:text-white'}`}>
                                 {copiedField === 'email' ? <Check size={14} /> : <Copy size={14} />}
                             </div>
                         </div>
@@ -119,7 +119,7 @@ export default function MemberDetailModal({ isOpen, onClose, user, tasks, produc
                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Teléfono</p>
                             <div className="flex items-center gap-2 group/copy cursor-pointer" onClick={() => handleCopy(user.phoneNumber || '', 'phone')}>
                                 <p className="text-sm font-bold">{user.phoneNumber}</p>
-                                <div className={`p-1.5 rounded-lg transition-all ${copiedField === 'phone' ? 'bg-emerald-500/10 text-emerald-400 scale-110' : 'bg-white/5 text-slate-500 opacity-0 group-hover/row:opacity-100 hover:text-white'}`}>
+                                <div className={`p-1.5 rounded-lg transition-all ${copiedField === 'phone' ? 'bg-emerald-500/10 text-emerald-400 scale-110' : 'bg-white/10 text-slate-400 hover:text-white'}`}>
                                     {copiedField === 'phone' ? <Check size={14} /> : <Copy size={14} />}
                                 </div>
                             </div>

@@ -224,7 +224,12 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile?.notificationSettings) {
-      setNotificationSettings(profile.notificationSettings as NotificationSettings);
+      // Self-healing: Merge with defaults to ensure new or missing settings exist
+      const healedSettings = {
+        ...notificationService.defaultSettings,
+        ...profile.notificationSettings
+      };
+      setNotificationSettings(healedSettings);
     }
   }, [profile]);
 
