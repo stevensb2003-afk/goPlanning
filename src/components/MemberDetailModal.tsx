@@ -1,5 +1,5 @@
-"use client";
-import { X, Mail, Phone, Shield, User, Camera, Video, PenTool, Edit3, Share2, Volume2, Sun, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
+import { X, Mail, Phone, Shield, User, Camera, Video, PenTool, Edit3, Share2, Volume2, Sun, HelpCircle, Copy, Check } from 'lucide-react';
 import { UserProfile } from '@/lib/services/userService';
 import Badge from './Badge';
 import UserAvatar from './UserAvatar';
@@ -13,7 +13,15 @@ interface MemberDetailModalProps {
 }
 
 export default function MemberDetailModal({ isOpen, onClose, user, tasks, productivity }: MemberDetailModalProps) {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   if (!isOpen || !user) return null;
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const roleIcons: Record<string, React.ReactNode> = {
     'admin': <Shield size={18} className="text-purple-400" />,
@@ -87,24 +95,34 @@ export default function MemberDetailModal({ isOpen, onClose, user, tasks, produc
             </div>
 
             <div className="space-y-4">
-                <div className="flex items-center gap-3 text-slate-300">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                <div className="flex items-start gap-3 text-slate-300 group/row">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 mt-1 flex-shrink-0">
                         <Mail size={18} />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Email</p>
-                        <p className="text-sm font-bold truncate max-w-[200px]">{user.email || 'No proporcionado'}</p>
+                        <div className="flex items-center gap-2 group/copy cursor-pointer" onClick={() => handleCopy(user.email || '', 'email')}>
+                            <p className="text-sm font-bold break-all">{user.email || 'No proporcionado'}</p>
+                            <div className={`p-1.5 rounded-lg transition-all ${copiedField === 'email' ? 'bg-emerald-500/10 text-emerald-400 scale-110' : 'bg-white/5 text-slate-500 opacity-0 group-hover/row:opacity-100 hover:text-white'}`}>
+                                {copiedField === 'email' ? <Check size={14} /> : <Copy size={14} />}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {user.phoneNumber && (
-                    <div className="flex items-center gap-3 text-slate-300">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                    <div className="flex items-start gap-3 text-slate-300 group/row">
+                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 mt-1 flex-shrink-0">
                             <Phone size={18} />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Teléfono</p>
-                            <p className="text-sm font-bold">{user.phoneNumber}</p>
+                            <div className="flex items-center gap-2 group/copy cursor-pointer" onClick={() => handleCopy(user.phoneNumber || '', 'phone')}>
+                                <p className="text-sm font-bold">{user.phoneNumber}</p>
+                                <div className={`p-1.5 rounded-lg transition-all ${copiedField === 'phone' ? 'bg-emerald-500/10 text-emerald-400 scale-110' : 'bg-white/5 text-slate-500 opacity-0 group-hover/row:opacity-100 hover:text-white'}`}>
+                                    {copiedField === 'phone' ? <Check size={14} /> : <Copy size={14} />}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
