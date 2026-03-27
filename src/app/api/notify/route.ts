@@ -92,6 +92,9 @@ export async function POST(req: NextRequest) {
         url: data?.url || "/",
       },
       webpush: {
+        headers: {
+          'Urgency': 'high'
+        },
         notification: {
           icon: "/favicon.svg",
           badge: "/favicon.svg",

@@ -60,50 +60,56 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// ROBUST NATIVE PUSH LISTENER
-// This replaces onBackgroundMessage to ensure nothing is ignored.
-self.addEventListener('push', (event) => {
-  console.log('[sw.js] Push event received:', event);
+// ---------------------------------------------------------
+// OFFICIAL FIREBASE BACKGROUND MESSAGE HANDLER
+// ---------------------------------------------------------
+// This handles messages specifically from Firebase when app is closed.
+messaging.onBackgroundMessage((payload) => {
+  console.log('[sw.js] Background message received:', payload);
 
-  let data = {};
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch (e) {
-      console.error('[sw.js] Error parsing push data as JSON:', e);
-      // Fallback to text if JSON fails
-      data = { body: event.data.text() };
-    }
-  }
-
-  console.log('[sw.js] Parsed push data:', data);
-
-  // Extract fields from possible Firebase or Native structures
-  const title = data.notification?.title || data.title || 'GoPlanning';
-  const body = data.notification?.body || data.body || 'Tienes una nueva actualización.';
-  
-  // Use current origin for icons to avoid cross-origin issues
-  const icon = '/favicon.svg';
-  const badge = '/favicon.svg';
-  
-  // Extract URL for deep linking
-  // Check multiple possible paths where FCM or custom scripts might put the URL
-  const url = data.data?.url || data.url || (data.fcmOptions?.link) || '/';
-
+  const notificationTitle = payload.notification?.title || 'GoPlanning Update';
   const notificationOptions = {
-    body: body,
-    icon: icon,
-    badge: badge,
-    data: { url: url },
-    tag: data.data?.tag || 'default',
+    body: payload.notification?.body || 'Tienes una nueva actualización.',
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
+    data: {
+      url: payload.data?.url || (payload.fcmOptions?.link) || '/'
+    },
+    tag: payload.data?.tag || 'default',
     renotify: true,
-    vibrate: [100, 50, 100],
-    requireInteraction: true
   };
 
-  event.waitUntil(
-    self.registration.showNotification(title, notificationOptions)
-  );
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// ROBUST NATIVE PUSH LISTENER (FALLBACK)
+// Only triggers if Firebase's internal handler doesn't catch it.
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    // If the message is handled by onBackgroundMessage, this event may still fire
+    // in some environments. We check if a notification was already shown.
+    console.log('[sw.js] Native push event received');
+    
+    // We only manually show if it's NOT a standard Firebase notification block
+    // (Firebase handles notification blocks automatically in SW context if configured).
+    try {
+      const data = event.data.json();
+      if (!data.notification) {
+        // Only if it's "data-only" and we're in the background
+        const title = data.data?.title || data.title || 'GoPlanning';
+        const options = {
+          body: data.data?.body || data.body || 'Nuevo mensaje recibido.',
+          icon: '/favicon.svg',
+          badge: '/favicon.svg',
+          data: { url: data.data?.url || data.url || '/' }
+        };
+        event.waitUntil(self.registration.showNotification(title, options));
+      }
+    } catch (e) {
+      // Fallback for non-JSON push
+      console.log('[sw.js] Non-JSON push received');
+    }
+  }
 });
 
 // Handle notification interaction
