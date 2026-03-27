@@ -106,18 +106,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Now that we have the initial definitive state, we can stop "hard" loading
             setLoading(false);
 
-            // Then, subscribe to future changes
+            // Subscribe to future changes immediately for real-time sync
             unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
-              // Ignore local optimistic updates to prevent flicker/redirects
-              if (snapshot.metadata.hasPendingWrites) return;
-              
+              // We NO LONGER ignore pending writes. 
+              // This allows for "Latency Compensation" during onboarding.
               if (snapshot.exists()) {
                 setProfile(snapshot.data() as UserProfile);
               } else if (!snapshot.metadata.fromCache) {
-                // Only clobber if the server confirms it's gone
                 setProfile(null);
               }
+              
+              // Only set loading to false AFTER the first real data (or null) is in
+              setLoading(false);
+            }, (error) => {
+              console.error("Profile subscription error:", error);
+              setLoading(false);
             });
+
           } catch (error) {
             console.error("Error loading profile:", error);
             setLoading(false);

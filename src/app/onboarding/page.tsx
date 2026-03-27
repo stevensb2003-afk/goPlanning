@@ -63,7 +63,8 @@ export default function OnboardingPage() {
         localStorage.setItem('pendingWelcomeNotification', 'true');
       }
       
-      // We don't need manual redirect here anymore, AuthContext handles it
+      // Proactive redirect to clear the "Hanging" state
+      router.push("/");
     } catch (error: any) {
       console.error("Error saving profile:", error);
       alert("Error al registrar: " + error.message);
