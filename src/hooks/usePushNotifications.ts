@@ -15,7 +15,7 @@ export const usePushNotifications = (userId: string | undefined) => {
     }
   }, []);
 
-  const requestPermission = async () => {
+  const requestPermission = async (force = false) => {
     if (!userId || !messaging) return;
 
     try {
@@ -23,7 +23,7 @@ export const usePushNotifications = (userId: string | undefined) => {
       setPermission(status);
       
       if (status === 'granted') {
-        await syncToken(); // Use the existing sync logic
+        await syncToken(force); // Pass the force flag
       }
     } catch (error) {
       console.error('An error occurred while requesting permission:', error);

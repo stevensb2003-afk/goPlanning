@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'goplanning-cache-v15';
+const CACHE_NAME = 'goplanning-cache-v18';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -86,12 +86,7 @@ messaging.onBackgroundMessage((payload) => {
 // Only triggers if Firebase's internal handler doesn't catch it.
 self.addEventListener('push', (event) => {
   if (event.data) {
-    // If the message is handled by onBackgroundMessage, this event may still fire
-    // in some environments. We check if a notification was already shown.
     console.log('[sw.js] Native push event received');
-    
-    // We only manually show if it's NOT a standard Firebase notification block
-    // (Firebase handles notification blocks automatically in SW context if configured).
     try {
       const data = event.data.json();
       if (!data.notification) {
@@ -106,7 +101,6 @@ self.addEventListener('push', (event) => {
         event.waitUntil(self.registration.showNotification(title, options));
       }
     } catch (e) {
-      // Fallback for non-JSON push
       console.log('[sw.js] Non-JSON push received');
     }
   }
@@ -141,4 +135,3 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-

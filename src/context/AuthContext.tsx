@@ -25,7 +25,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
-  requestNotificationPermission: () => Promise<void>;
+  requestNotificationPermission: (force?: boolean) => Promise<void>;
   fcmToken: string | null;
   notificationPermission: NotificationPermission;
 }

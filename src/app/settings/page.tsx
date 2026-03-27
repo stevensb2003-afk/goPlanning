@@ -687,8 +687,7 @@ export default function SettingsPage() {
                           <button
                             onClick={async () => {
                               try {
-                                await requestNotificationPermission();
-                                // The syncToken in the context will run, but let's be sure
+                                await requestNotificationPermission(true); // Force sync
                                 setNotification({ message: 'Conexión refrescada con éxito en este dispositivo', type: 'success' });
                               } catch (err) {
                                 setNotification({ message: 'Error al refrescar conexión', type: 'error' });
