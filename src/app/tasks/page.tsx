@@ -97,6 +97,14 @@ function TasksContent() {
     }
   }, [tasks]);
 
+  const pendingApprovalCount = useMemo(() => {
+    const activeProjectIds = new Set(projects.map(p => p.id));
+    return tasks.filter(t => 
+      t.status === 'pending-approval' && 
+      (!t.projectId || activeProjectIds.has(t.projectId))
+    ).length;
+  }, [tasks, projects]);
+
   if (initiallyLoading) return (
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
@@ -232,13 +240,16 @@ function TasksContent() {
                     </button>
                     <button
                       onClick={() => setViewMode('pending')}
-                      className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                      className={`relative flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
                         viewMode === 'pending' 
                           ? 'bg-pink-600 text-white shadow-lg shadow-pink-500/20' 
                           : 'text-slate-500 hover:text-white'
                       }`}
                     >
                       Por Aprobar
+                      {pendingApprovalCount > 0 && (
+                        <span className="absolute -top-1 -right-0.5 w-2.5 h-2.5 bg-pink-500 rounded-full border-2 border-[#0B101B] shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
+                      )}
                     </button>
                   </>
                 )}

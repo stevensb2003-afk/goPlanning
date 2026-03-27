@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import CustomDropdown from './CustomDropdown';
 import CustomDatePicker from './CustomDatePicker';
+import { formatLocalDate } from '@/lib/dateUtils';
 
 interface NewTaskModalProps {
   isOpen: boolean;
@@ -169,7 +170,7 @@ export default function NewTaskModal({ isOpen, onClose, onSuccess, projects }: N
                   <div className="w-full bg-slate-900 border border-white/5 rounded-xl py-3 px-4 text-white flex items-center gap-3 cursor-pointer hover:border-white/10 transition-all">
                     <Calendar size={18} className="text-slate-500" />
                     <span className={dueDate ? 'text-white font-medium text-sm' : 'text-slate-600 font-medium text-sm'}>
-                      {dueDate || 'Seleccionar fecha...'}
+                      {dueDate ? formatLocalDate(dueDate, 'dd/MM/yyyy') : 'Seleccionar fecha...'}
                     </span>
                   </div>
                 }

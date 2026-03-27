@@ -9,13 +9,25 @@ function getAdminApp(): admin.app.App {
   }
 
   const saEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!saEnv) {
-    throw new Error("ENVIRONMENT_ERROR: FIREBASE_SERVICE_ACCOUNT is missing in process.env");
+  
+  // 1. Check if the environment variable is missing or a placeholder (${...})
+  // This happens if GitHub secrets or App Hosting params are not correctly injected.
+  const isPlaceholder = saEnv?.trim().startsWith("${");
+  
+  if (!saEnv || isPlaceholder) {
+    console.log("Firebase Service Account JSON not found or is a placeholder. Using Application Default Credentials.");
+    try {
+      return admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    } catch (err: any) {
+      const reason = isPlaceholder ? "PLACEHOLDER_DETECTED" : "MISSING_ENV";
+      throw new Error(`AUTHENTICATION_ERROR: [${reason}] Fallback to Application Default Credentials failed: ${err.message}. Please ensure the Cloud Run service identity has 'Firebase Messaging Admin' permissions.`);
+    }
   }
 
-  // Pre-check for common formatting issues (like being truncated or having extra quotes)
+  // 2. If we have a potential JSON string, try to parse and use it
   const trimmedSa = saEnv.trim();
-  
   try {
     const serviceAccount = JSON.parse(trimmedSa);
     if (!serviceAccount.project_id || !serviceAccount.private_key) {
@@ -26,11 +38,19 @@ function getAdminApp(): admin.app.App {
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (err: any) {
-    // If it's a JSON parse error, provide some context (length, start/end)
     const preview = trimmedSa.length > 20 
       ? `${trimmedSa.substring(0, 10)}...${trimmedSa.substring(trimmedSa.length - 10)}`
       : trimmedSa;
-    throw new Error(`CONFIGURATION_ERROR: [Length: ${trimmedSa.length}] [Preview: ${preview}] - ${err.message}`);
+    
+    // Last ditch effort: try ADC if JSON parsing failed but we are on GCP
+    console.warn(`JSON Parse failed for Service Account. Preview: ${preview}. Error: ${err.message}. Trying ADC fallback.`);
+    try {
+      return admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    } catch (adcErr: any) {
+      throw new Error(`CONFIGURATION_ERROR: [Length: ${trimmedSa.length}] [Preview: ${preview}] - JSON error: ${err.message}. ADC fallback also failed: ${adcErr.message}`);
+    }
   }
 }
 

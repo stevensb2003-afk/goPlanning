@@ -11,6 +11,7 @@ import { collection, query, getDocs } from 'firebase/firestore';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import ProjectDetailModal from '@/components/ProjectDetailModal';
 import { useUI } from '@/context/UIContext';
+import { formatLocalDate } from '@/lib/dateUtils';
 import { Menu as MenuIcon } from 'lucide-react';
 
 export default function ProjectsPage() {
@@ -225,7 +226,10 @@ export default function ProjectsPage() {
                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
                           <Calendar size={12} className="text-cyan-500/50" />
                           <span>
-                            {project.isDateRange ? `${project.startDate} - ${project.endDate}` : project.startDate}
+                            {project.isDateRange 
+                              ? `${formatLocalDate(project.startDate || '', 'd MMM')} - ${formatLocalDate(project.endDate || '', 'd MMM')}` 
+                              : formatLocalDate(project.startDate || '', 'd MMM')
+                            }
                           </span>
                         </div>
                       ) : (

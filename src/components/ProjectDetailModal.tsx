@@ -12,6 +12,7 @@ import { projectService, Task, Project, ALLOWED_TRANSITIONS, TaskStatus } from '
 import { statusOptions, priorityOptions, getStatusConfig, getPriorityConfig } from '@/lib/constants';
 import { userService, UserProfile } from '@/lib/services/userService';
 import { commentService, Comment } from '@/lib/services/commentService';
+import { formatLocalDate } from '@/lib/dateUtils';
 import { configService } from '@/lib/services/configService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -461,10 +462,20 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
   ), [tasks]);
   
   const calculatedProgress = useMemo(() => {
-    if (tasks.length === 0) return 0;
-    const completed = tasks.filter(t => t.status === 'done' || t.status === 'completed').length;
-    return Math.round((completed / tasks.length) * 100);
+    const relevantTasks = tasks.filter(t => t.status !== 'canceled');
+    if (relevantTasks.length === 0) return 0;
+    const completed = relevantTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
+    return Math.round((completed / relevantTasks.length) * 100);
   }, [tasks]);
+
+  // Silent sync to Firestore when progress is recalculated (fixes legacy data automatically)
+  useEffect(() => {
+    if (project.id && !loading && tasks.length > 0) {
+      if (calculatedProgress !== project.progress) {
+        projectService.updateProject(project.id, { progress: calculatedProgress });
+      }
+    }
+  }, [calculatedProgress, project.id, project.progress, loading, tasks.length]);
 
   if (!isOpen) return null;
 
@@ -591,7 +602,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                     value={project.startDate || ''} 
                     onChange={(val) => handleUpdateProject({ startDate: val, endDate: val })}
                     disabled={isReadOnly || isCollaborator}
-                    trigger={<span className={cn("text-xs font-bold text-white transition-colors", !isReadOnly && !isCollaborator && "cursor-pointer hover:text-purple-400")}>{project.startDate || 'Definir...'}</span>}
+                    trigger={<span className={cn("text-xs font-bold text-white transition-colors", !isReadOnly && !isCollaborator && "cursor-pointer hover:text-purple-400")}>{project.startDate ? formatLocalDate(project.startDate, 'd MMM, yyyy') : 'Definir...'}</span>}
                   />
                 </div>
               ) : (
@@ -602,7 +613,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                       value={project.startDate || ''} 
                       onChange={(val) => handleUpdateProject({ startDate: val })}
                       disabled={isReadOnly || isCollaborator}
-                      trigger={<span className={cn("text-xs font-bold text-white transition-colors", !isReadOnly && !isCollaborator && "cursor-pointer hover:text-purple-400")}>{project.startDate || 'Definir...'}</span>}
+                      trigger={<span className={cn("text-xs font-bold text-white transition-colors", !isReadOnly && !isCollaborator && "cursor-pointer hover:text-purple-400")}>{project.startDate ? formatLocalDate(project.startDate, 'd MMM, yyyy') : 'Definir...'}</span>}
                     />
                   </div>
                   <div className="flex flex-col">
@@ -612,7 +623,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                       onChange={(val) => handleUpdateProject({ endDate: val })}
                       align="right"
                       disabled={isReadOnly || isCollaborator}
-                      trigger={<span className={cn("text-xs font-bold text-white transition-colors", !isReadOnly && !isCollaborator && "cursor-pointer hover:text-purple-400")}>{project.endDate || 'Definir...'}</span>}
+                      trigger={<span className={cn("text-xs font-bold text-white transition-colors", !isReadOnly && !isCollaborator && "cursor-pointer hover:text-purple-400")}>{project.endDate ? formatLocalDate(project.endDate, 'd MMM, yyyy') : 'Definir...'}</span>}
                     />
                   </div>
                 </>
@@ -840,7 +851,7 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                                         isReadOnly ? "opacity-50 cursor-not-allowed" : (task.dueDate ? "hover:bg-slate-800 hover:text-white cursor-pointer" : "")
                                       )}>
                                         <Clock size={10} />
-                                        {task.dueDate ? new Date(task.dueDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'SIN FECHA'}
+                                        {task.dueDate ? formatLocalDate(task.dueDate, 'dd MMM') : 'SIN FECHA'}
                                       </div>
                                     }
                                   />

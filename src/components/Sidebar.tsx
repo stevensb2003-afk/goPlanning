@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { LayoutDashboard, Briefcase, Calendar, CheckSquare, Settings, Users, LogOut, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
 import { cn } from '@/lib/utils';
 import UserAvatar from './UserAvatar';
+import { useMemo } from 'react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
@@ -22,7 +24,17 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { profile, logout } = useAuth();
+  const { profile, logout, isAdmin } = useAuth();
+  const { tasks, projects } = useData();
+
+  const pendingApprovalCount = useMemo(() => {
+    if (!isAdmin) return 0;
+    const activeProjectIds = new Set(projects.map(p => p.id));
+    return tasks.filter(t => 
+      t.status === 'pending-approval' && 
+      (!t.projectId || activeProjectIds.has(t.projectId))
+    ).length;
+  }, [tasks, projects, isAdmin]);
 
   const getInitials = (name: string) => {
     return name?.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || '??';
@@ -79,6 +91,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 )}
                 <Icon size={20} className={cn(isActive ? "text-cyan-400" : "group-hover:text-white transition-colors")} />
                 <span className="text-sm tracking-tight">{item.label}</span>
+                
+                {item.label === 'Tareas' && pendingApprovalCount > 0 && (
+                  <span className="ml-auto w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
+                )}
               </Link>
             );
           })}

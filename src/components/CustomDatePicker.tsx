@@ -5,6 +5,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, en
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { parseLocalDate } from '@/lib/dateUtils';
 
 interface CustomDatePickerProps {
   value: string;
@@ -32,8 +33,8 @@ export default function CustomDatePicker({
   const [verticalAlign, setVerticalAlign] = useState<'bottom' | 'top'>('bottom');
   
   // Parse incoming value or use current date for calendar view
-  const initialDate = value ? parseISO(value) : new Date();
-  const [currentMonth, setCurrentMonth] = useState(isValid(initialDate) ? initialDate : new Date());
+  const initialDate = parseLocalDate(value) || new Date();
+  const [currentMonth, setCurrentMonth] = useState(initialDate);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -194,7 +195,7 @@ export default function CustomDatePicker({
     let day = startDate;
     let formattedDate = "";
 
-    const selectedDate = value && value !== "" ? parseISO(value) : null;
+    const selectedDate = value && value !== "" ? parseLocalDate(value) : null;
 
     while (day <= endDate) {
         for (let i = 0; i < 7; i++) {

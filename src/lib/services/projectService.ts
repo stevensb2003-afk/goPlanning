@@ -344,9 +344,11 @@ export const projectService = {
       const tasks = querySnapshot.docs.map(doc => doc.data()) as Task[];
       
       let progress = 0;
-      if (tasks.length > 0) {
-        const completedTasks = tasks.filter(t => t.status === 'done').length;
-        progress = Math.round((completedTasks / tasks.length) * 100);
+      const relevantTasks = tasks.filter(t => t.status !== 'canceled');
+      
+      if (relevantTasks.length > 0) {
+        const completedTasksCount = relevantTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
+        progress = Math.round((completedTasksCount / relevantTasks.length) * 100);
       }
 
       // Fetch current project to check its status
@@ -531,7 +533,7 @@ export const projectService = {
       );
       
       const totalTasksCount = activeTasks.length;
-      const completedTasksCount = activeTasks.filter(t => t.status === 'done').length;
+      const completedTasksCount = activeTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
       const pendingTasksCount = totalTasksCount - completedTasksCount;
       
       // Global Progress including ALL active tasks
@@ -579,12 +581,29 @@ export const projectService = {
 
       // --- HISTORICAL METRICS (Using already fetched allTasks) ---
       const lifetimeTasks = allTasks.length;
-      const lifetimeCompleted = allTasks.filter(d => d.status === 'done').length;
+      const lifetimeCompleted = allTasks.filter(d => d.status === 'done' || d.status === 'completed').length;
       const lifetimeProgress = lifetimeTasks > 0 ? Math.round((lifetimeCompleted / lifetimeTasks) * 100) : 0;
+
+      // Calculate real progress for the displayed projects to ensure accuracy in dashboard widgets
+      const projectsWithRealProgress = await Promise.all(
+        activeProjects.slice(0, 4).map(async (p) => {
+          const qTasks = query(collection(db, "tasks"), where("projectId", "==", p.id));
+          const snapTasks = await getDocs(qTasks);
+          const projectTasks = snapTasks.docs.map(doc => doc.data()) as Task[];
+          
+          const relevant = projectTasks.filter(t => t.status !== 'canceled');
+          let prog = 0;
+          if (relevant.length > 0) {
+            const completed = relevant.filter(t => t.status === 'done' || t.status === 'completed').length;
+            prog = Math.round((completed / relevant.length) * 100);
+          }
+          return { ...p, progress: prog };
+        })
+      );
 
       return {
         activeProjectsCount: activeProjects.length,
-        activeProjects: activeProjects.slice(0, 3),
+        activeProjects: projectsWithRealProgress,
         totalTasks: totalTasksCount,
         completedTasks: completedTasksCount,
         pendingTasks: pendingTasksCount,

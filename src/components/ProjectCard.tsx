@@ -1,5 +1,6 @@
 "use client";
 import { MoreVertical, Users, Calendar } from 'lucide-react';
+import { formatLocalDate } from '@/lib/dateUtils';
 import Badge from './Badge';
 
 interface ProjectCardProps {
@@ -58,7 +59,10 @@ export default function ProjectCard({
             <div className="flex items-center gap-1.5 text-cyan-400/80">
               <Calendar size={12} strokeWidth={2.5} />
               <span className="text-[10px] font-black uppercase tracking-wider">
-                {isDateRange ? `${startDate} - ${endDate}` : startDate}
+                {isDateRange 
+                  ? `${formatLocalDate(startDate || '', 'd MMM')} - ${formatLocalDate(endDate || '', 'd MMM')}` 
+                  : formatLocalDate(startDate || '', 'd MMM')
+                }
               </span>
             </div>
           )}

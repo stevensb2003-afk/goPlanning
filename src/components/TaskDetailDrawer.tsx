@@ -13,6 +13,7 @@ import { serverTimestamp } from 'firebase/firestore';
 import CommentText from './CommentText';
 import { cn } from '@/lib/utils';
 import UserAvatar from './UserAvatar';
+import { formatLocalDate } from '@/lib/dateUtils';
 
 
 interface TaskDetailDrawerProps {
@@ -360,7 +361,7 @@ export default function TaskDetailDrawer({
                          "text-xs font-bold",
                          task.dueDate ? "text-slate-200" : "text-slate-500"
                        )}>
-                         {task.dueDate ? new Date(task.dueDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Sin fecha'}
+                         {task.dueDate ? formatLocalDate(task.dueDate, 'dd/MM/yyyy') : 'Sin fecha'}
                        </span>
                     </div>
                   }

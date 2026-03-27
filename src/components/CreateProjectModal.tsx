@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import CustomDropdown from './CustomDropdown';
 import CustomDatePicker from './CustomDatePicker';
+import { formatLocalDate } from '@/lib/dateUtils';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -187,7 +188,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                   }}
                   trigger={
                     <div className="w-full bg-slate-900 border border-white/5 rounded-2xl py-3 px-4 text-sm text-slate-300 flex justify-between items-center cursor-pointer hover:border-white/10 transition-all">
-                      <span>{startDate || "Seleccionar fecha..."}</span>
+                      <span>{startDate ? formatLocalDate(startDate, 'dd/MM/yyyy') : "Seleccionar fecha..."}</span>
                       <Calendar size={16} className="text-slate-500" />
                     </div>
                   }
@@ -202,7 +203,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                     onChange={setStartDate}
                     trigger={
                       <div className="w-full bg-slate-900 border border-white/5 rounded-2xl py-3 px-4 text-sm text-slate-300 flex justify-between items-center cursor-pointer hover:border-white/10 transition-all">
-                        <span>{startDate || "Seleccionar..."}</span>
+                        <span>{startDate ? formatLocalDate(startDate, 'dd/MM/yyyy') : "Seleccionar..."}</span>
                         <Calendar size={16} className="text-slate-500" />
                       </div>
                     }
@@ -217,7 +218,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                     align="right"
                     trigger={
                       <div className="w-full bg-slate-900 border border-white/5 rounded-2xl py-3 px-4 text-sm text-slate-300 flex justify-between items-center cursor-pointer hover:border-white/10 transition-all">
-                        <span>{endDate || "Seleccionar..."}</span>
+                        <span>{endDate ? formatLocalDate(endDate, 'dd/MM/yyyy') : "Seleccionar..."}</span>
                         <Calendar size={16} className="text-slate-500" />
                       </div>
                     }

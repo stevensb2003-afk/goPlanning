@@ -8,6 +8,7 @@ import { projectService } from '@/lib/services/projectService';
 import { configService, AppConfig } from '@/lib/services/configService';
 import InviteModal from '@/components/InviteModal';
 import MemberDetailModal from '@/components/MemberDetailModal';
+import { parseLocalDate } from '@/lib/dateUtils';
 import InlineDropdown from '@/components/InlineDropdown';
 import { Shield, Camera, Video, PenTool, Edit3, Share2, Volume2, Sun, HelpCircle, Filter, Menu as MenuIcon } from 'lucide-react';
 import { useUI } from '@/context/UIContext';
@@ -58,7 +59,7 @@ export default function TeamPage() {
             userTasks.forEach(task => {
               if (task.status === 'done') completed++;
               
-              const dueDate = task.dueDate ? new Date(task.dueDate + 'T23:59:59') : null;
+              const dueDate = task.dueDate ? parseLocalDate(task.dueDate) : null;
               const completedAt = task.completedAt?.toDate?.() || 
                                   (task.status === 'done' ? (task.updatedAt?.toDate?.() || now) : null);
               

@@ -27,6 +27,7 @@ import CustomDatePicker from './CustomDatePicker';
 import InlineDropdown from './InlineDropdown';
 import { cn } from '@/lib/utils';
 import UserAvatar from './UserAvatar';
+import { parseLocalDate, formatLocalDate } from '@/lib/dateUtils';
 
 interface TaskTableProps {
   tasks: Task[];
@@ -134,7 +135,8 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
           <tbody className="divide-y divide-white/5">
             {tasks.map((task) => {
               const proj = projects.find(p => p.id === task.projectId);
-              const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done';
+              const dueDateParsed = task.dueDate ? parseLocalDate(task.dueDate) : null;
+              const isOverdue = dueDateParsed && dueDateParsed < new Date() && task.status !== 'done';
               
               return (
                 <tr key={task.id} className="hover:bg-white/[0.02] transition-colors group">
@@ -323,7 +325,7 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                             : isOverdue ? "text-rose-400 bg-rose-500/10 border border-rose-500/20" 
                             : "text-slate-400 bg-white/[0.02] border border-white/5"
                           )}>
-                            <Calendar size={14} /> {task.dueDate ? new Date(task.dueDate).toLocaleDateString('es-CR', { day: '2-digit', month: 'short' }) : 'SIN FECHA'}
+                            <Calendar size={14} /> {task.dueDate ? formatLocalDate(task.dueDate, 'dd MMM') : 'SIN FECHA'}
                           </span>
                         </div>
                       }
@@ -364,7 +366,9 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                   {isCompletedView && (
                     <td className="px-6 py-4">
                       {(() => {
-                        const dueDate = task.dueDate ? new Date(task.dueDate + "T23:59:59") : null;
+                        const dueDate = task.dueDate ? parseLocalDate(task.dueDate) : null;
+                        if (dueDate) dueDate.setHours(23, 59, 59, 999);
+                        
                         const completionTimestamp = task.completedAt || (task.status === 'done' ? task.updatedAt : null);
                         const completedDate = completionTimestamp?.toDate?.() || (completionTimestamp ? new Date(completionTimestamp) : null);
                         
@@ -374,9 +378,7 @@ export default function TaskTable({ tasks, projects, team, taskTypes, onUpdate, 
                           );
                         }
 
-                        // Reset hours for comparison if we only care about days, but here we have full timestamps
-                        // Usually dueDate is a string like "YYYY-MM-DD"
-                        const isOnTime = completedDate <= new Date(task.dueDate + "T23:59:59");
+                        const isOnTime = completedDate <= dueDate;
 
                         return isOnTime ? (
                           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
