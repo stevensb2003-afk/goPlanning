@@ -34,47 +34,59 @@ export const commentService = {
       createdAt: serverTimestamp()
     });
 
-    // 1. Notify Task Owner
+    // 1. Gather all potential recipients and prioritize mention > comment
     const task = await projectService.getTaskById(comment.taskId);
-    if (task && task.createdBy !== comment.userId) {
-      const recipients = new Set<string>();
-      if (task.assignedTo) task.assignedTo.forEach(uid => recipients.add(uid));
-      if (task.createdBy) recipients.add(task.createdBy);
+    const notificationMap = new Map<string, { type: 'comment' | 'mention', title: string, message: string }>();
 
-      // Don't notify the person who just commented
-      recipients.delete(comment.userId);
-
-      for (const userId of Array.from(recipients)) {
-        await notificationService.createNotification({
-          userId,
+    if (task) {
+      // Add owner and assigned as 'comment' priority
+      if (task.createdBy && task.createdBy !== comment.userId) {
+        notificationMap.set(task.createdBy, {
           type: 'comment',
           title: 'Nuevo comentario',
-          message: `${comment.userName} comentó en "${task.title}"`,
-          link: `/tasks?taskId=${task.id}`,
-          actorName: comment.userName,
-          actorPhoto: comment.userPhoto,
-          sourceId: task.id
+          message: `${comment.userName} comentó en "${task.title}"`
+        });
+      }
+      if (task.assignedTo) {
+        task.assignedTo.forEach(uid => {
+          if (uid !== comment.userId) {
+            notificationMap.set(uid, {
+              type: 'comment',
+              title: 'Nuevo comentario',
+              message: `${comment.userName} comentó en "${task.title}"`
+            });
+          }
         });
       }
     }
 
-    // 2. Notify Mentions
+    // Add mentions as 'mention' priority (overwrites 'comment' if present)
     if (comment.mentions && comment.mentions.length > 0) {
-      for (const mentionedUid of comment.mentions) {
-        if (mentionedUid === comment.userId) continue; // skip self
-        
-        await notificationService.createNotification({
-          userId: mentionedUid,
-          type: 'mention',
-          title: 'Te mencionaron',
-          message: `${comment.userName} te mencionó en un comentario`,
-          link: `/tasks?taskId=${comment.taskId}`,
-          actorName: comment.userName,
-          actorPhoto: comment.userPhoto,
-          sourceId: comment.taskId
-        });
-      }
+      comment.mentions.forEach(uid => {
+        if (uid !== comment.userId) {
+          notificationMap.set(uid, {
+            type: 'mention',
+            title: 'Te mencionaron',
+            message: `${comment.userName} te mencionó en un comentario`
+          });
+        }
+      });
     }
+
+    // 2. Send exactly one notification per unique recipient
+    Array.from(notificationMap.entries()).forEach(async ([userId, info]) => {
+      await notificationService.createNotification({
+        userId,
+        type: info.type,
+        title: info.title,
+        message: info.message,
+        link: `/tasks?taskId=${comment.taskId}`,
+        actorName: comment.userName,
+        actorPhoto: comment.userPhoto,
+        sourceId: comment.taskId,
+        tag: `task_comment_${comment.taskId}` // Helps group notifications on the device
+      });
+    });
 
     return docRef;
   },

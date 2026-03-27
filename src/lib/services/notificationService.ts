@@ -17,6 +17,7 @@ export interface Notification {
   actorName?: string;
   actorPhoto?: string;
   sourceId?: string; // taskId, projectId, etc.
+  tag?: string; // Grouping/Collapsing tag
 }
 
 export const notificationService = {
@@ -83,7 +84,8 @@ export const notificationService = {
             body: data.message, // Usamos el mensaje como cuerpo del push
             data: {
               url: data.link || '/',
-              type: data.type
+              type: data.type,
+              tag: data.tag || 'default'
             }
           })
         }).catch(err => console.error("Push fetch error:", err));
@@ -160,10 +162,11 @@ export const notificationService = {
   async sendWelcomeNotification(userId: string, userName: string) {
     return this.createNotification({
       userId,
-      type: 'assignment', // Use assignment as proxy or just a generic type
+      type: 'assignment',
       title: '¡Bienvenido a GoPlanning! 🚀',
       message: `Hola ${userName}, gracias por unirte. Ahora recibirás actualizaciones de tus tareas aquí.`,
-      link: '/'
+      link: '/',
+      tag: 'welcome'
     });
   },
 
@@ -173,7 +176,8 @@ export const notificationService = {
       type: 'high-priority',
       title: 'Notificación de Prueba ✅',
       message: 'Esto confirma que tus notificaciones PWA están configuradas correctamente y el icono se ve genial.',
-      link: '/settings'
+      link: '/settings',
+      tag: 'test_notification'
     });
   }
 };

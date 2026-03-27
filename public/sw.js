@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'goplanning-cache-v18';
+const CACHE_NAME = 'goplanning-cache-v19';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -82,31 +82,10 @@ messaging.onBackgroundMessage((payload) => {
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// ROBUST NATIVE PUSH LISTENER (FALLBACK)
-// Only triggers if Firebase's internal handler doesn't catch it.
-self.addEventListener('push', (event) => {
-  if (event.data) {
-    console.log('[sw.js] Native push event received');
-    try {
-      const data = event.data.json();
-      if (!data.notification) {
-        // Only if it's "data-only" and we're in the background
-        const title = data.data?.title || data.title || 'GoPlanning';
-        const options = {
-          body: data.data?.body || data.body || 'Nuevo mensaje recibido.',
-          icon: '/favicon.svg',
-          badge: '/favicon.svg',
-          data: { url: data.data?.url || data.url || '/' }
-        };
-        event.waitUntil(self.registration.showNotification(title, options));
-      }
-    } catch (e) {
-      console.log('[sw.js] Non-JSON push received');
-    }
-  }
-});
 
-// Handle notification interaction
+// ---------------------------------------------------------
+// NOTIFICATION INTERACTION HANDLERS
+// ---------------------------------------------------------
 self.addEventListener('notificationclick', (event) => {
   console.log('[sw.js] Notification clicked:', event.notification.data);
   event.notification.close();

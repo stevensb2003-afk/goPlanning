@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { messaging, db } from '@/lib/firebase';
 import { getToken } from 'firebase/messaging';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { getDeviceId } from '@/lib/utils';
 
 const VAPID_KEY = "BBpfTx4ihDQutDmC_mLV2cQVIqpU8uFQ7F1JsOOthh8qlvja-rk8n6MhqT8eoJGB9MQH4IDw-qoPFr8n-ioU5xQ";
 
@@ -23,7 +24,7 @@ export const usePushNotifications = (userId: string | undefined) => {
       setPermission(status);
       
       if (status === 'granted') {
-        await syncToken(force); // Pass the force flag
+        await syncToken(force);
       }
     } catch (error) {
       console.error('An error occurred while requesting permission:', error);
@@ -34,23 +35,22 @@ export const usePushNotifications = (userId: string | undefined) => {
     if (!userId || !messaging || Notification.permission !== 'granted') return;
 
     try {
-      // If force, we try to get a fresh token
       const currentToken = await getToken(messaging, {
         vapidKey: VAPID_KEY
       });
       
       if (currentToken) {
         setToken(currentToken);
-        // Save to Firestore using arrayUnion to avoid duplicates while ensuring it's present
+        const deviceId = getDeviceId();
         const userRef = doc(db, 'users', userId);
         
-        // We always perform the update to ensure the token is in the list
-        // even if the local state thought it was already there.
+        // Use a map { deviceId: token } to ensure 1 token per device
+        // This prevents duplicate notifications when tokens change or SW updates
         await updateDoc(userRef, {
-          fcmTokens: arrayUnion(currentToken)
+          [`fcmTokensMap.${deviceId}`]: currentToken
         });
         
-        console.log('FCM Token synced successfully', force ? '(Forced)' : '');
+        console.log(`FCM Token synced for device: ${deviceId}`, force ? '(Forced)' : '');
         return currentToken;
       }
     } catch (error) {

@@ -73,23 +73,23 @@ export async function POST(req: NextRequest) {
     const userData = userDoc.data();
     
     // 1. Check if user has disabled push notifications globally
-    // We only block if the preference is EXPLICITLY set to false
     if (userData?.notificationSettings?.pushEnabled === false) {
       return NextResponse.json({ message: "Push notifications are disabled for this user" });
     }
 
-    // 2. Send the message. 
-    // Sub-category checks (assignments, mentions, etc.) are handled by the 
-    // notificationService before even calling this endpoint, to avoid data sync issues.
+    // 2. Gather tokens from BOTH formats (legacy array and new map)
+    const legacyTokens: string[] = userData?.fcmTokens || [];
+    const mapTokens: string[] = userData?.fcmTokensMap ? Object.values(userData.fcmTokensMap) : [];
+    
+    // Use a Set to ensure absolute uniqueness before sending
+    const allTokens = Array.from(new Set([...legacyTokens, ...mapTokens])).filter(t => typeof t === 'string' && t.length > 0);
 
-    // 3. Deduplicate tokens to avoid multiple notifications on the same device
-    const tokens: string[] = Array.from(new Set(userData?.fcmTokens || []));
-
-    if (tokens.length === 0) {
+    if (allTokens.length === 0) {
       return NextResponse.json({ message: "No tokens found for user" });
     }
 
-    const messages: admin.messaging.Message[] = tokens.map((token) => ({
+    // 3. Prepare messages with collapseKey for deduplication at device level
+    const messages: admin.messaging.Message[] = allTokens.map((token) => ({
       token,
       notification: {
         title,
@@ -100,14 +100,21 @@ export async function POST(req: NextRequest) {
         title,
         body,
         url: data?.url || "/",
+        tag: data?.tag || "default", // Tag for collapse logic in browsers
+      },
+      fcmOptions: {
+        analyticsLabel: "go_planning_notification",
       },
       webpush: {
         headers: {
-          'Urgency': 'high'
+          'Urgency': 'high',
+          'Topic': data?.tag || 'default', // Webpush topic acts as a collapse key
         },
         notification: {
           icon: "/favicon.svg",
           badge: "/favicon.svg",
+          tag: data?.tag || "default",
+          renotify: true,
         },
         fcmOptions: {
           link: data?.url || "/",
@@ -115,19 +122,35 @@ export async function POST(req: NextRequest) {
       },
     }));
 
-    // Enviar mensajes de forma masiva usando la instancia de messaging de la app
+    // Send messages in batch
     const responses = await app.messaging().sendEach(messages);
     
     const successCount = responses.successCount;
     const failureCount = responses.failureCount;
 
-    // Opcional: Limpiar tokens inválidos (que fallaron)
+    // 4. Cleanup failing tokens (Important for keeping the map/array clean)
     if (failureCount > 0) {
-      const validTokens = tokens.filter((_, index) => responses.responses[index].success);
-      if (validTokens.length !== tokens.length) {
-        await app.firestore().collection("users").doc(userId).update({
-          fcmTokens: validTokens
-        });
+      const failedTokens = allTokens.filter((_, index) => !responses.responses[index].success);
+      
+      // Clean legacy array
+      const newLegacyTokens = legacyTokens.filter(t => !failedTokens.includes(t));
+      
+      // Clean map
+      let newMap = { ...(userData?.fcmTokensMap || {}) };
+      let mapChanged = false;
+      Object.entries(newMap).forEach(([deviceId, token]) => {
+        if (failedTokens.includes(token as string)) {
+          delete newMap[deviceId];
+          mapChanged = true;
+        }
+      });
+
+      const updates: any = {};
+      if (newLegacyTokens.length !== legacyTokens.length) updates.fcmTokens = newLegacyTokens;
+      if (mapChanged) updates.fcmTokensMap = newMap;
+      
+      if (Object.keys(updates).length > 0) {
+        await app.firestore().collection("users").doc(userId).update(updates);
       }
     }
 

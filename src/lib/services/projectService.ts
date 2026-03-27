@@ -393,7 +393,8 @@ export const projectService = {
           link: `/tasks?taskId=${docRef.id}`,
           actorName: creator?.fullName || creator?.displayName || 'Un administrador',
           actorPhoto: creator?.photoURL || undefined,
-          sourceId: docRef.id
+          sourceId: docRef.id,
+          tag: `assignment_${docRef.id}`
         });
       }
     }
@@ -441,7 +442,8 @@ export const projectService = {
           link: `/tasks?taskId=${id}`,
           actorName,
           actorPhoto,
-          sourceId: id
+          sourceId: id,
+          tag: `assignment_${id}`
         });
       }
     }
@@ -461,7 +463,8 @@ export const projectService = {
             link: `/tasks?taskId=${id}`,
             actorName,
             actorPhoto,
-            sourceId: id
+            sourceId: id,
+            tag: `approval_request_${id}`
           });
         }
       }
@@ -478,7 +481,8 @@ export const projectService = {
             link: `/tasks?taskId=${id}`,
             actorName,
             actorPhoto,
-            sourceId: id
+            sourceId: id,
+            tag: `approval_result_${id}`
           });
         }
       }
@@ -493,7 +497,8 @@ export const projectService = {
             link: `/tasks?taskId=${id}`,
             actorName,
             actorPhoto,
-            sourceId: id
+            sourceId: id,
+            tag: `task_done_${id}`
           });
         }
       }
