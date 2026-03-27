@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X, Mail, Link, Copy, Check, Share2, Sparkles } from 'lucide-react';
-import { configService } from '@/lib/services/configService';
+import { useState } from 'react';
+import { X, Link, Copy, Check, Share2, Sparkles } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -10,24 +10,11 @@ interface InviteModalProps {
 
 export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
   const [copied, setCopied] = useState(false);
-  const [baseInviteLink, setBaseInviteLink] = useState('https://go-planning.app/signup');
-  const [refId] = useState(() => Math.random().toString(36).substring(7));
-
-  useEffect(() => {
-    if (isOpen) {
-      const fetchLink = async () => {
-        const config = await configService.getConfig();
-        if (config.inviteLink) {
-          setBaseInviteLink(config.inviteLink);
-        }
-      };
-      fetchLink();
-    }
-  }, [isOpen]);
+  
+  // Hardcoded fixed invitation link as requested
+  const inviteLink = "https://goplanning--goplanning-audiovisual-church.us-central1.hosted.app/";
 
   if (!isOpen) return null;
-
-  const inviteLink = `${baseInviteLink}${baseInviteLink.includes('?') ? '&' : '?'}ref=invite_${refId}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -67,21 +54,34 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
         </div>
 
         <div className="p-8 space-y-8">
-          {/* Main Visual/Icon */}
+          {/* QR Code Section */}
           <div className="flex justify-center">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center border border-white/10 shadow-inner">
-                <Share2 size={40} className="text-purple-400" />
+            <div className="relative group">
+              <div className="p-4 rounded-[2.5rem] bg-white flex items-center justify-center border-4 border-purple-500/20 shadow-2xl transition-all duration-500 hover:scale-105 active:scale-95 group-hover:border-purple-500/40">
+                <QRCodeSVG 
+                  value={inviteLink}
+                  size={160}
+                  level="H"
+                  includeMargin={false}
+                  imageSettings={{
+                    src: "/favicon.svg",
+                    x: undefined,
+                    y: undefined,
+                    height: 24,
+                    width: 24,
+                    excavate: true,
+                  }}
+                />
               </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center animate-pulse">
-                <Sparkles size={14} className="text-yellow-400" />
+              <div className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform">
+                <Sparkles size={18} className="text-yellow-400" />
               </div>
             </div>
           </div>
 
           <div className="text-center space-y-2">
             <h4 className="text-lg font-bold text-white">¡Listo para compartir!</h4>
-            <p className="text-slate-400 text-sm px-4">Cualquier persona con este enlace podrá unirse como colaborador a tu equipo.</p>
+            <p className="text-slate-400 text-sm px-4">Escanea el código o comparte el enlace fijo para invitar colaboradores.</p>
           </div>
 
           <div className="space-y-4">
@@ -94,7 +94,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
               <span>Compartir Invitación</span>
             </button>
 
-            {/* Link Section Reorganized */}
+            {/* Link Section */}
             <div className="space-y-3 pt-2">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block text-center">
                 O copia el enlace directo
@@ -110,7 +110,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mb-0.5">Enlace de acceso</p>
                   <p className="text-sm font-medium text-slate-300 truncate tracking-tight">
-                    {baseInviteLink.replace(/^https?:\/\//, '').split('?')[0]}?ref=invite_...
+                    {inviteLink.replace(/^https?:\/\//, '')}
                   </p>
                 </div>
 

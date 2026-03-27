@@ -1,5 +1,42 @@
 "use client";
-import { User, Bell, Shield, Palette, Globe, Save, LogOut, Settings as SettingsIcon, Plus, Trash2, Pencil, Users, Briefcase, CheckSquare, X, Check, ChevronDown, UserCircle, Menu as MenuIcon, Mail, Phone, Camera, CheckCircle2, MessageSquare } from 'lucide-react';
+import { 
+  User, 
+  Bell, 
+  Shield, 
+  Palette, 
+  Globe, 
+  Save, 
+  LogOut, 
+  Settings as SettingsIcon, 
+  Plus, 
+  Trash2, 
+  Pencil, 
+  Users, 
+  Briefcase, 
+  CheckSquare, 
+  X, 
+  Check, 
+  ChevronDown, 
+  UserCircle, 
+  Menu as MenuIcon, 
+  Mail, 
+  Phone, 
+  Camera, 
+  CheckCircle2, 
+  MessageSquare,
+  Moon,
+  Sun,
+  Chrome,
+  Smartphone,
+  AlertTriangle,
+  ExternalLink,
+  Lock,
+  Database,
+  Layout,
+  FileCode,
+  Zap,
+  Sparkles
+} from 'lucide-react';
 import { useUI } from '@/context/UIContext';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect, useMemo } from 'react';
@@ -533,29 +570,19 @@ export default function SettingsPage() {
                     <div className="pb-20">
                       {configSubTab === 'general' ? (
                         <div className="glass p-8 rounded-3xl border border-white/5 bg-white/[0.02] space-y-6">
-                          <div className="space-y-2">
-                            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Enlace de Invitación</h4>
-                            <p className="text-sm text-slate-400 mb-6">Este es el enlace base que se utiliza para invitar a nuevos colaboradores al equipo.</p>
-                            
-                            <div className="flex flex-col sm:flex-row gap-4">
-                              <input 
-                                type="text" 
-                                value={config?.inviteLink || ''}
-                                onChange={(e) => setConfig(prev => prev ? { ...prev, inviteLink: e.target.value } : null)}
-                                placeholder="https://tu-dominio.com/signup"
-                                className="flex-1 bg-slate-900 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                              />
-                              <button 
-                                onClick={() => handleConfigUpdate({ inviteLink: config?.inviteLink })}
-                                className="px-8 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition-all shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2"
-                              >
-                                <Save size={18} />
-                                <span>Actualizar Link</span>
-                              </button>
-                            </div>
-                            <p className="text-[10px] text-slate-500 italic mt-2">
-                              * Asegúrate de incluir el protocolo (http:// o https://). El sistema le añadirá automáticamente un ID de referencia.
+                          <div className="space-y-4">
+                            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Información del Sistema</h4>
+                            <p className="text-sm text-slate-400">
+                              El sistema de invitaciones ahora es automático y usa un enlace fijo y seguro. 
+                              No es necesario configurar el enlace manualmente.
                             </p>
+                            
+                            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
+                              <p className="text-xs text-purple-300 font-medium flex items-center gap-2">
+                                <Sparkles size={14} />
+                                Enlace activo: https://goplanning--goplanning-audiovisual-church.us-central1.hosted.app/
+                              </p>
+                            </div>
                           </div>
                         </div>
                       ) : (
