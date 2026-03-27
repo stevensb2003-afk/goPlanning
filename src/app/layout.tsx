@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "GoPlanning - Gestión Audiovisual",
     description: "Plataforma de gestión de contenido para iglesias.",
-    url: "https://goplanning-audiovisual-church.web.app",
+    url: "https://goplanning--goplanning-audiovisual-church.us-central1.hosted.app/",
     siteName: "GoPlanning",
     images: [
       {
