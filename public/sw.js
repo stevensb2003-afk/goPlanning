@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'goplanning-cache-v7';
+const CACHE_NAME = 'goplanning-cache-v15';
 const urlsToCache = [
   '/',
   '/manifest.json',
