@@ -56,21 +56,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!messaging) return;
     
+    // Clean up old listeners
     const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("Foreground message received:", payload);
+      console.log("🔔 Foreground Message received:", payload);
       
-      // Only show if the user has push enabled and we have permission
-      if (Notification.permission === 'granted' && profile?.notificationSettings?.pushEnabled) {
-        const title = payload.notification?.title || "Nueva notificación";
-        const options = {
-          body: payload.notification?.body || "",
-          icon: "https://goplanning-audiovisual-church.web.app/favicon.svg",
-          badge: "https://goplanning-audiovisual-church.web.app/favicon.svg",
-          data: payload.data
-        };
+      // We always log the message to help debug if it was "blocked" by settings
+      if (Notification.permission === 'granted') {
+        const isPushEnabled = profile?.notificationSettings?.pushEnabled !== false;
         
-        // Show native notification
-        new Notification(title, options);
+        if (isPushEnabled) {
+          // You could optionally show a toast here too, but simple logs help narrow it down
+          // If the user says it's not arriving even when open, this log will confirm if it reached the device.
+          new Notification(payload.notification?.title || "Nueva Notificación", {
+            body: payload.notification?.body,
+            icon: "/favicon.svg",
+            data: payload.data
+          });
+        } else {
+          console.warn("🔔 Notification blocked by profile settings (pushEnabled === false)");
+        }
+      } else {
+        console.warn("🔔 Notification blocked by browser permission:", Notification.permission);
       }
     });
 

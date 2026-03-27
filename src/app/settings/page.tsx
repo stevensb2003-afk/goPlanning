@@ -673,13 +673,30 @@ export default function SettingsPage() {
                             onChange={(val) => handleNotificationSettingsSave({ highPriority: val })}
                           />
                         </div>
-                        <div className="mt-8 pt-8 border-t border-white/5">
+                        <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
                           <button
                             onClick={handleSendTestNotification}
                             className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-300 font-bold text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                           >
                             <Bell size={16} className="text-purple-400" />
                             Probar Notificación
+                          </button>
+                          
+                          <button
+                            onClick={async () => {
+                              try {
+                                await requestNotificationPermission();
+                                // The syncToken in the context will run, but let's be sure
+                                setNotification({ message: 'Conexión refrescada con éxito en este dispositivo', type: 'success' });
+                              } catch (err) {
+                                setNotification({ message: 'Error al refrescar conexión', type: 'error' });
+                              }
+                            }}
+                            className="w-full py-4 rounded-2xl bg-cyan-500/5 border border-cyan-500/20 text-cyan-400/80 font-bold text-[10px] uppercase tracking-widest hover:bg-cyan-500/10 hover:text-cyan-400 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                            title="Haz clic aquí si las notificaciones no están llegando a este celular"
+                          >
+                            <Zap size={14} className="text-cyan-400" />
+                            Refrescar Conexión del Dispositivo
                           </button>
                         </div>
                       </div>

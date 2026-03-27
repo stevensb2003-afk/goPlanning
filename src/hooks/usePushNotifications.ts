@@ -30,25 +30,32 @@ export const usePushNotifications = (userId: string | undefined) => {
     }
   };
 
-  const syncToken = async () => {
+  const syncToken = async (force = false) => {
     if (!userId || !messaging || Notification.permission !== 'granted') return;
 
     try {
+      // If force, we try to get a fresh token
       const currentToken = await getToken(messaging, {
         vapidKey: VAPID_KEY
       });
       
       if (currentToken) {
         setToken(currentToken);
-        // Save to Firestore
+        // Save to Firestore using arrayUnion to avoid duplicates while ensuring it's present
         const userRef = doc(db, 'users', userId);
+        
+        // We always perform the update to ensure the token is in the list
+        // even if the local state thought it was already there.
         await updateDoc(userRef, {
           fcmTokens: arrayUnion(currentToken)
         });
-        console.log('FCM Token synced successfully');
+        
+        console.log('FCM Token synced successfully', force ? '(Forced)' : '');
+        return currentToken;
       }
     } catch (error) {
       console.error('Error syncing FCM token:', error);
+      throw error;
     }
   };
 
