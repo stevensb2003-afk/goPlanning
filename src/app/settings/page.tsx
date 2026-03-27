@@ -238,7 +238,9 @@ export default function SettingsPage() {
     const updated = { ...notificationSettings, ...newSettings } as NotificationSettings;
     setNotificationSettings(updated);
     try {
-      if (newSettings.pushEnabled && profile?.uid) {
+      // If we are enabling push, or user already has push enabled and is updating other settings,
+      // it's a good time to ensure the device token is still valid and synced.
+      if (updated.pushEnabled && profile?.uid) {
         await requestNotificationPermission();
       }
       await userService.updateUserProfile(profile.uid, { notificationSettings: updated });
