@@ -35,8 +35,19 @@ export const usePushNotifications = (userId: string | undefined) => {
     if (!userId || !messaging || Notification.permission !== 'granted') return;
 
     try {
+      // For iOS/Safari reliability, we explicitly register the service worker
+      // and pass the registration object to getToken.
+      let registration;
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+        if (!registration) {
+          registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        }
+      }
+
       const currentToken = await getToken(messaging, {
-        vapidKey: VAPID_KEY
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration
       });
       
       if (currentToken) {

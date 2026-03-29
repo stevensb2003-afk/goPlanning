@@ -55,6 +55,7 @@ import { ToastProvider } from "@/context/ToastContext";
 import { UIProvider } from "@/context/UIContext";
 import MainLayoutWrapper from "@/components/MainLayoutWrapper";
 import PWARegistration from "@/components/PWARegistration";
+import UpdateManager from "@/components/UpdateManager";
 
 export default function RootLayout({
   children,
@@ -65,6 +66,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <PWARegistration />
+        <UpdateManager />
         <AuthProvider>
           <DataProvider>
             <ToastProvider>

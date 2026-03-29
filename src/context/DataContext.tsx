@@ -82,10 +82,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!profile || isAdmin || projects.length === 0) return;
 
     const currentUnsubs: (() => void)[] = [];
-    
-    projects.forEach(project => {
-      const unsub = projectService.subscribeToProjectTasks(project.id!, (projTasks) => {
-        setProjectTaskMap(prev => ({ ...prev, [project.id!]: projTasks }));
+    const projectIds = projects.map(p => p.id).filter(Boolean) as string[];
+
+    // Firestore 'in' query has a limit of 30 items. 
+    // We chunk the project IDs to stay within this limit while reducing connections.
+    const chunks: string[][] = [];
+    for (let i = 0; i < projectIds.length; i += 30) {
+      chunks.push(projectIds.slice(i, i + 30));
+    }
+
+    chunks.forEach(chunk => {
+      const unsub = projectService.subscribeToProjectsTasks(chunk, (projTasks) => {
+        // Group tasks by projectId for the local state map
+        const grouped: Record<string, Task[]> = {};
+        projTasks.forEach(t => {
+          if (t.projectId) {
+            if (!grouped[t.projectId]) grouped[t.projectId] = [];
+            grouped[t.projectId].push(t);
+          }
+        });
+
+        setProjectTaskMap(prev => {
+          const next = { ...prev };
+          // Ensure we update all projects in this chunk (even if they have no tasks)
+          chunk.forEach(id => {
+            next[id] = grouped[id] || [];
+          });
+          return next;
+        });
       });
       currentUnsubs.push(unsub);
     });

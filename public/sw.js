@@ -1,5 +1,5 @@
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
 const CACHE_NAME = 'goplanning-cache-v19';
 const urlsToCache = [
@@ -114,3 +114,13 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// ---------------------------------------------------------
+// REFRESH & UPDATE HANDLERS
+// ---------------------------------------------------------
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+

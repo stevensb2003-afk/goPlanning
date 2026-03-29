@@ -126,6 +126,29 @@ export const projectService = {
     });
   },
 
+  subscribeToProjectsTasks(projectIds: string[], callback: (tasks: Task[]) => void) {
+    if (projectIds.length === 0) {
+      callback([]);
+      return () => {};
+    }
+    const q = query(
+      collection(db, "tasks"), 
+      where("projectId", "in", projectIds),
+      orderBy("createdAt", "asc")
+    );
+    return onSnapshot(q, (snapshot) => {
+      const tasks = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        title: doc.data().title || "Tarea sin título",
+        status: doc.data().status || "todo",
+      })) as Task[];
+      callback(tasks);
+    }, (error) => {
+      console.error(`Error in batch project tasks subscription:`, error);
+    });
+  },
+
   subscribeToUserTasks(userId: string, callback: (tasks: Task[]) => void) {
     const q = query(
       collection(db, "tasks"),
@@ -589,22 +612,19 @@ export const projectService = {
       const lifetimeCompleted = allTasks.filter(d => d.status === 'done' || d.status === 'completed').length;
       const lifetimeProgress = lifetimeTasks > 0 ? Math.round((lifetimeCompleted / lifetimeTasks) * 100) : 0;
 
-      // Calculate real progress for the displayed projects to ensure accuracy in dashboard widgets
-      const projectsWithRealProgress = await Promise.all(
-        activeProjects.slice(0, 4).map(async (p) => {
-          const qTasks = query(collection(db, "tasks"), where("projectId", "==", p.id));
-          const snapTasks = await getDocs(qTasks);
-          const projectTasks = snapTasks.docs.map(doc => doc.data()) as Task[];
-          
-          const relevant = projectTasks.filter(t => t.status !== 'canceled');
-          let prog = 0;
-          if (relevant.length > 0) {
-            const completed = relevant.filter(t => t.status === 'done' || t.status === 'completed').length;
-            prog = Math.round((completed / relevant.length) * 100);
-          }
-          return { ...p, progress: prog };
-        })
-      );
+      // Real-time local calculation of progress for the first 4 projects 
+      // OPTIMIZED: Reuse the 'allTasks' already fetched above instead of 4 separate queries.
+      const projectsWithRealProgress = activeProjects.slice(0, 4).map(p => {
+        const projectTasks = allTasks.filter(t => t.projectId === p.id);
+        const relevant = projectTasks.filter(t => t.status !== 'canceled');
+        
+        let prog = 0;
+        if (relevant.length > 0) {
+          const completedCount = relevant.filter(t => t.status === 'done' || t.status === 'completed').length;
+          prog = Math.round((completedCount / relevant.length) * 100);
+        }
+        return { ...p, progress: prog };
+      });
 
       return {
         activeProjectsCount: activeProjects.length,
