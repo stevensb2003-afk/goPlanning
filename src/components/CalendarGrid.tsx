@@ -6,6 +6,7 @@ import { UserProfile } from '@/lib/services/userService';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Badge from './Badge';
+import { parseLocalDate, formatLocalDate } from '@/lib/dateUtils';
 
 interface CalendarGridProps {
   tasks: Task[];
@@ -201,7 +202,16 @@ export default function CalendarGrid({ tasks, projects, team, viewType }: Calend
           const today = formatDateStr(new Date());
           const isToday = dateStr === today;
           
-          const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+          const dayTasks = tasks.filter(t => {
+            if (!t.dueDate) return false;
+            // Robust parsing and comparison to avoid timezone shifts
+            const taskDate = parseLocalDate(t.dueDate);
+            if (!taskDate) return false;
+            
+            return taskDate.getFullYear() === dateObj.getFullYear() &&
+                   taskDate.getMonth() === dateObj.getMonth() &&
+                   taskDate.getDate() === dateObj.getDate();
+          });
           
           return (
             <div 

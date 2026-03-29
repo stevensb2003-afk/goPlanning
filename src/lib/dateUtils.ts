@@ -9,19 +9,33 @@ import { es } from 'date-fns/locale';
 export function parseLocalDate(dateStr: string | undefined | null): Date | null {
   if (!dateStr) return null;
   
-  // Handle case where dateStr might already be a DateISO string or have time
+  // Manejar el caso donde la cadena incluya 'T' (ISO string)
   const [datePart] = dateStr.includes('T') ? dateStr.split('T') : [dateStr];
-  const parts = datePart.split('-');
   
+  // Identificar el delimitador (guion o barra)
+  const delimiter = datePart.includes('-') ? '-' : datePart.includes('/') ? '/' : null;
+  if (!delimiter) return null;
+  
+  const parts = datePart.split(delimiter);
   if (parts.length !== 3) return null;
   
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1; // 0-indexed months
-  const day = parseInt(parts[2], 10);
+  let year, month, day;
+  // Si la primera parte tiene 4 dígitos, es YYYY-MM-DD
+  if (parts[0].length === 4) {
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1;
+    day = parseInt(parts[2], 10);
+  } else {
+    // Si no, es DD/MM/YYYY o DD-MM-YYYY
+    day = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1;
+    year = parseInt(parts[2], 10);
+  }
   
   const date = new Date(year, month, day);
   return isValid(date) ? date : null;
 }
+
 
 /**
  * Formats a YYYY-MM-DD string into a human-readable format, handling timezone issues.

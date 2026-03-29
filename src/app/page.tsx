@@ -15,6 +15,7 @@ import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import AgendaItem from '@/components/AgendaItem';
 import AgendaDayHeader from '@/components/AgendaDayHeader';
+import { parseLocalDate, formatLocalDate } from '@/lib/dateUtils';
 
 
 interface DashboardStats {
@@ -59,9 +60,17 @@ export default function Dashboard() {
 
   const getRelativeDateLabel = (dateStr: string) => {
     if (dateStr === 'Sin Fecha') return 'Sin Fecha';
-    const date = parseISO(dateStr);
-    if (isToday(date)) return 'Hoy';
-    if (isTomorrow(date)) return 'Mañana';
+    const date = parseLocalDate(dateStr);
+    if (!date) return dateStr;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.getTime() === today.getTime()) return 'Hoy';
+    if (date.getTime() === tomorrow.getTime()) return 'Mañana';
+    
     return format(date, "EEEE, d 'de' MMM", { locale: es });
   };
 
@@ -366,7 +375,12 @@ export default function Dashboard() {
                 <div key={dateKey}>
                   <AgendaDayHeader 
                     date={getRelativeDateLabel(dateKey)} 
-                    isToday={isToday(parseISO(dateKey))}
+                    isToday={(() => {
+                      const d = parseLocalDate(dateKey);
+                      const t = new Date();
+                      t.setHours(0,0,0,0);
+                      return d?.getTime() === t.getTime();
+                    })()}
                   />
                   <div className="space-y-1">
                     {groupedDeadlines[dateKey].map((task) => {

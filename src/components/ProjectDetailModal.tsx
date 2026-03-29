@@ -1220,8 +1220,9 @@ export default function ProjectDetailModal({ isOpen, onClose, project, onUpdate 
                           disabled={!isAdmin && project.createdBy !== user?.uid || isReadOnly}
                           trigger={
                             <p className="text-sm font-bold text-white leading-tight cursor-pointer hover:text-purple-400 transition-colors">
-                              {selectedTask.dueDate || 'No definida'}
+                              {selectedTask.dueDate ? formatLocalDate(selectedTask.dueDate, 'dd/MM/yyyy') : 'No definida'}
                             </p>
+
                           }
                         />
                       </div>
