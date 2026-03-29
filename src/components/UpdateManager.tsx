@@ -11,31 +11,31 @@ export default function UpdateManager() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // 1. Monitor for updates on any existing registration
-      navigator.serviceWorker.getRegistration('/').then(reg => {
+      // Removed '/' argument for better compatibility across environments
+      navigator.serviceWorker.getRegistration().then(reg => {
         if (reg) {
           setRegistration(reg);
           
-          // Check if there's already an update waiting (e.g. from a previous load)
+          // Check if there's already an update waiting
           if (reg.waiting) {
             setShowUpdateModal(true);
           }
 
-          // Listen for new updates found
-          reg.onupdatefound = () => {
+          // Use addEventListener for better reliability than '.onupdatefound'
+          reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
             if (newWorker) {
-              newWorker.onstatechange = () => {
+              newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New SW is installed and waiting to take over
                   setShowUpdateModal(true);
                 }
-              };
+              });
             }
-          };
+          });
         }
       });
 
-      // 2. Listen for 'controllerchange' to reload pages once skipWaiting() takes effect
+      // 2. Listen for 'controllerchange' to reload pages
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (refreshing) return;
@@ -46,13 +46,20 @@ export default function UpdateManager() {
   }, []);
 
   const handleUpdate = () => {
+    // 1. Try to send message to the waiting worker
     if (registration && registration.waiting) {
-      // Force skip-waiting message
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    } else {
-      // Fallback reload
-      window.location.reload();
+    } 
+    // 2. Try to send message to the installing worker (in case it just finished)
+    else if (registration && registration.installing) {
+      registration.installing.postMessage({ type: 'SKIP_WAITING' });
     }
+    
+    // 3. Robust Fallback: Force reload after 2 seconds if no controllerchange fired
+    // This handles cases where the SW activates but the event doesn't reach the UI
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   };
 
   return (
