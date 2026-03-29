@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'goplanning-cache-v19';
+const CACHE_NAME = 'goplanning-cache-v20';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -67,13 +67,13 @@ self.addEventListener('fetch', (event) => {
 messaging.onBackgroundMessage((payload) => {
   console.log('[sw.js] Background message received:', payload);
 
-  const notificationTitle = payload.notification?.title || 'GoPlanning Update';
+  const notificationTitle = payload.data?.title || 'GoPlanning Update';
   const notificationOptions = {
-    body: payload.notification?.body || 'Tienes una nueva actualización.',
+    body: payload.data?.body || 'Tienes una nueva actualización.',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
     data: {
-      url: payload.data?.url || (payload.fcmOptions?.link) || '/'
+      url: payload.data?.url || '/'
     },
     tag: payload.data?.tag || 'default',
     renotify: true,
@@ -81,6 +81,7 @@ messaging.onBackgroundMessage((payload) => {
 
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
+
 
 
 // ---------------------------------------------------------

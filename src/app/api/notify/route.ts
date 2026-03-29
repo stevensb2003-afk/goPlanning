@@ -91,10 +91,6 @@ export async function POST(req: NextRequest) {
     // 3. Prepare messages with collapseKey for deduplication at device level
     const messages: admin.messaging.Message[] = allTokens.map((token) => ({
       token,
-      notification: {
-        title,
-        body,
-      },
       data: {
         ...data,
         title,
@@ -109,12 +105,6 @@ export async function POST(req: NextRequest) {
         headers: {
           'Urgency': 'high',
           'Topic': data?.tag || 'default', // Webpush topic acts as a collapse key
-        },
-        notification: {
-          icon: "/favicon.svg",
-          badge: "/favicon.svg",
-          tag: data?.tag || "default",
-          renotify: true,
         },
         fcmOptions: {
           link: data?.url || "/",

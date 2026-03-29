@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { messaging, db } from '@/lib/firebase';
-import { getToken } from 'firebase/messaging';
+import { getToken, onMessage } from 'firebase/messaging';
 import { doc, updateDoc } from 'firebase/firestore';
 import { getDeviceId } from '@/lib/utils';
 
@@ -15,6 +15,38 @@ export const usePushNotifications = (userId: string | undefined) => {
       setPermission(Notification.permission);
     }
   }, []);
+
+  // Listen for messages while the app is in the foreground
+  useEffect(() => {
+    if (!messaging) return;
+
+    const unsubscribe = onMessage(messaging, async (payload) => {
+      console.log('FCM Message received in foreground:', payload);
+      
+      // If we are in the foreground, we should manually show a notification
+      // or a Toast. Let's try to show a system notification if possible.
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+          if (registration) {
+            registration.showNotification(payload.data?.title || 'GoPlanning', {
+              body: payload.data?.body || 'Nueva actualización',
+              icon: '/favicon.svg',
+              badge: '/favicon.svg',
+              tag: payload.data?.tag || 'default',
+              data: {
+                url: payload.data?.url || '/'
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Error showing foreground notification:', err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
 
   const requestPermission = async (force = false) => {
     if (!userId || !messaging) return;
