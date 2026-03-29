@@ -23,11 +23,10 @@ export const usePushNotifications = (userId: string | undefined) => {
     const unsubscribe = onMessage(messaging, async (payload) => {
       console.log('FCM Message received in foreground:', payload);
       
-      // If we are in the foreground, we should manually show a notification
-      // or a Toast. Let's try to show a system notification if possible.
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+          // Use getRegistration() without arguments to get the active SW for the current page
+          const registration = await navigator.serviceWorker.getRegistration();
           if (registration) {
             registration.showNotification(payload.data?.title || 'GoPlanning', {
               body: payload.data?.body || 'Nueva actualización',
@@ -71,9 +70,9 @@ export const usePushNotifications = (userId: string | undefined) => {
       // and pass the registration object to getToken.
       let registration;
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-        registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+        registration = await navigator.serviceWorker.getRegistration();
         if (!registration) {
-          registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          registration = await navigator.serviceWorker.register('/sw.js');
         }
       }
 
